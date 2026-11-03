@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>G2 Compass - Buyer Demand Intelligence</title>
+<style>
+:root{
+  --ink:#111820; --body:#48555f; --faint:#8a97a3; --line:#e3e8ed; --line2:#eef1f4;
+  --bg:#f6f8f9; --card:#fff; --accent:#FF492C; --deep:#0d2a43;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;
+  line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto;padding:0 28px}
+
+.topbar{position:sticky;top:0;z-index:20;background:rgba(246,248,249,.93);
+  backdrop-filter:blur(8px);border-bottom:1px solid transparent;padding:18px 0}
+.topbar.stuck{border-bottom-color:var(--line)}
+.topbar .inner{display:flex;align-items:center;gap:10px}
+.mark{width:25px;height:25px;border-radius:7px;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700}
+.wordmark{font-size:15px;font-weight:650;letter-spacing:-.1px}
+.wordmark span{color:var(--faint);font-weight:450}
+.steps{display:flex;gap:5px;margin-left:auto}
+.dot{width:20px;height:3px;border-radius:2px;background:var(--line)}
+.dot.on{background:var(--accent)} .dot.done{background:#c6d0d8}
+
+.screen{display:none;padding:48px 0 60px}
+.screen.on{display:block;animation:fade .26s ease}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 13px}
+h1{font-size:33px;line-height:1.16;letter-spacing:-.85px;font-weight:680;margin:0 0 12px}
+.lede{font-size:17px;color:var(--body);margin:0 0 40px;max-width:54ch}
+
+.qgroup{margin-bottom:34px}
+.qlabel{font-size:13px;font-weight:650;margin:0 0 11px}
+.qlabel em{font-style:normal;color:var(--faint);font-weight:450}
+.cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+@media(max-width:640px){.cards{grid-template-columns:1fr}}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:15px;
+  cursor:pointer;text-align:left;font-family:inherit;transition:.14s}
+.card:hover{border-color:#bfc9d3}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,73,44,.1)}
+.card .ct{font-weight:650;font-size:14.5px;margin-bottom:3px}
+.card .cs{color:var(--faint);font-size:12px;line-height:1.4}
+.pills{display:flex;flex-wrap:wrap;gap:7px}
+.pill{background:var(--card);border:1.5px solid var(--line);border-radius:100px;
+  padding:7px 14px;font-size:13.5px;cursor:pointer;font-family:inherit;color:var(--body);transition:.13s}
+.pill:hover{border-color:#bfc9d3}
+.pill.sel{border-color:var(--accent);background:var(--accent);color:#fff;font-weight:600}
+.pill.sel .np{color:rgba(255,255,255,.7)}
+.pill .np{color:var(--faint);font-size:11.5px;margin-left:5px}
+.pill .x{margin-left:6px;opacity:.8;font-weight:700}
+.tools{display:flex;gap:14px;align-items:center;margin-top:11px}
+.tools button{background:none;border:0;color:var(--faint);font-family:inherit;font-size:12.5px;
+  cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+.tools button:hover{color:var(--ink)}
+.sel-note{font-size:12.5px;color:var(--faint);margin-top:10px}
+.sel-note b{color:var(--deep)}
+
+.go{background:var(--ink);color:#fff;border:0;border-radius:10px;padding:14px 30px;font-size:15px;
+  font-weight:600;font-family:inherit;cursor:pointer;margin-top:6px}
+.go:hover{background:#000}
+.go[disabled]{background:#ccd4db;cursor:not-allowed}
+.link{background:none;border:0;color:var(--faint);font-family:inherit;font-size:13.5px;
+  cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+.link:hover{color:var(--ink)}
+
+.ask{position:relative}
+.ask input{width:100%;border:1.5px solid var(--line);border-radius:12px;
+  padding:16px 58px 16px 17px;font-size:15.5px;font-family:inherit;background:var(--card);color:var(--ink)}
+.ask input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,73,44,.1)}
+.ask button{position:absolute;right:7px;top:7px;bottom:7px;width:40px;border:0;border-radius:9px;
+  background:var(--ink);color:#fff;font-size:16px;cursor:pointer}
+.sg{display:block;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);
+  border-radius:11px;padding:14px 16px;margin-bottom:8px;cursor:pointer;font-family:inherit;
+  font-size:15px;color:var(--ink);transition:.13s}
+.sg:hover{border-color:var(--accent)}
+.sg small{display:block;color:var(--faint);font-size:11px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;margin-bottom:3px}
+
+/* answer */
+.ctx{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:30px;font-size:12.5px}
+.chip{background:#e9edf1;border-radius:100px;padding:5px 11px;font-weight:550;color:var(--deep)}
+.chip.q{background:#fff2ef;color:#b8331c;display:inline-flex;align-items:center}
+.chip.ed{background:#fff;border:1.5px solid var(--line);cursor:pointer;font-family:inherit;
+  font-size:12.5px;font-weight:550;color:var(--deep);padding:5px 11px;transition:.13s}
+.chip.ed:hover{border-color:#bfc9d3}
+.chip.ed.open{border-color:var(--accent);color:var(--accent)}
+.chip.ed .cv{margin-left:6px;opacity:.55;font-size:9px}
+.chip.q .cx{background:none;border:0;color:inherit;cursor:pointer;font-size:15px;
+  margin-left:6px;padding:0;line-height:1}
+.edbox{background:var(--card);border:1.5px solid var(--line);border-radius:13px;
+  padding:16px 18px;margin:-14px 0 28px}
+.edh{display:flex;align-items:center;font-size:11.5px;font-weight:700;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:13px}
+.edx{margin-left:auto;background:var(--ink);color:#fff;border:0;border-radius:7px;padding:6px 14px;
+  font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0;text-transform:none;cursor:pointer}
+.edbox .tools{margin-top:11px}
+.edna{color:var(--faint);font-size:12.5px;margin-top:11px}
+.know{font-size:16.5px;line-height:1.55;color:#2b3640;margin:0 0 18px;
+  padding:14px 17px;background:#f6f8f9;border-left:3px solid var(--purple)}
+.know b{font-weight:800;color:#111}
+.subsect{font-size:13px;color:#5a6672;line-height:1.5;margin:-6px 0 12px;max-width:640px}
+.big i{font-size:19px;font-weight:700;font-style:normal;color:#8a97a3;margin-left:7px}
+.stat{margin-bottom:26px}
+.stat .big{font-size:62px;font-weight:700;letter-spacing:-2.4px;line-height:1;color:var(--deep)}
+.stat .big i{font-style:normal;font-size:28px;letter-spacing:-1px;color:var(--accent)}
+.answer-primary{margin-bottom:28px;padding:24px 26px 26px;background:#fff;border:1.5px solid var(--line);border-radius:16px}
+.answer-evidence{padding:22px 26px 20px;background:#fff;border:1.5px solid var(--line);border-radius:16px}
+.answer-action{margin-top:28px}
+.answer-action .fia{margin-top:0}
+.answer-explore{margin-top:34px;padding:28px 26px 4px;border:1.5px solid var(--line);border-radius:16px;background:#f6f8f9}
+.answer-explore>.sect:first-child{margin-top:0}
+.stat .say{font-size:19px;line-height:1.4;font-weight:550;margin-top:9px;max-width:38ch}
+.basis{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:14px;
+  font-size:16px;color:var(--body)}
+.basis b{font-size:19px;font-weight:700;color:var(--deep);font-variant-numeric:tabular-nums}
+.basis .rank{background:#e9edf1;border-radius:100px;padding:3px 11px;font-size:13px;
+  font-weight:600;color:var(--deep)}
+.quote{margin:26px 0 32px;padding:0 0 0 19px;border-left:3px solid var(--accent)}
+.quote .qt{font-size:15.5px;color:var(--body);line-height:1.6;min-height:3.2em}
+.quote .qf{display:flex;align-items:center;gap:12px;margin-top:11px}
+.quote cite{font-style:normal;font-size:12px;color:var(--faint)}
+.qnav{margin-left:auto;display:flex;align-items:center;gap:6px}
+.qnav button{width:26px;height:26px;border:1px solid var(--line);background:#fff;border-radius:7px;
+  cursor:pointer;color:var(--body);font-size:12px;line-height:1;padding:0}
+.qnav button:hover{border-color:var(--accent);color:var(--accent)}
+.qnav .qn{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums;min-width:34px;text-align:center}
+.sect{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);margin:0 0 15px}
+.row{margin-bottom:14px;cursor:pointer}
+.row:hover .rt b{color:var(--accent)}
+.row .rt{display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:6px;gap:12px}
+.row .rt b{font-weight:550;transition:.13s}
+.row .rt .v{color:var(--deep);font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .rt .v em{font-style:normal;color:var(--faint);font-weight:450;font-size:12.5px;margin-left:5px}
+.trk{height:7px;background:#e7ebef;border-radius:4px;overflow:hidden}
+.trk i{display:block;height:100%;background:var(--deep);border-radius:4px}
+.row.hi .trk i{background:var(--accent)}
+.hint{font-size:12.5px;color:var(--faint);margin-top:14px}
+
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:6px}
+@media(max-width:720px){.tiles{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px;
+  cursor:pointer;text-align:left;font-family:inherit;transition:.13s;min-width:0}
+.tile:hover{border-color:var(--accent)}
+.tile .tk{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tn{font-size:23px;font-weight:700;color:var(--deep);letter-spacing:-.7px;margin:6px 0 2px}
+.tile .tv{font-size:12.5px;line-height:1.3;color:var(--ink);font-weight:550}
+
+.outbox{background:var(--card);border:1.5px solid var(--line);border-radius:13px;padding:18px 20px}
+.olbl{font-size:13px;font-weight:650;margin-bottom:9px}
+.olbl em{font-style:normal;color:var(--faint);font-weight:450}
+.outbox .ask{margin-bottom:2px}
+.oint{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;
+  font-size:14.5px;font-family:inherit;color:var(--ink);background:var(--bg)}
+.oint:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(255,73,44,.1)}
+.achips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.achip{background:var(--bg);border:1.5px solid var(--line);border-radius:100px;padding:6px 13px;
+  font-family:inherit;font-size:12.5px;color:var(--body);cursor:pointer;transition:.13s}
+.achip:hover{border-color:#bfc9d3;color:var(--ink)}
+.achip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.obuild{margin-top:13px;font-size:13.5px;color:var(--body);background:var(--bg);
+  border-radius:9px;padding:11px 13px}
+.obuild b{color:var(--deep)}
+.olink{background:none!important;border:0!important;color:var(--faint)!important;
+  text-decoration:underline;text-underline-offset:3px;padding:10px 4px!important}
+.olink:hover{color:var(--ink)!important}
+.obtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px;align-items:center}
+.obtns button{background:#fff;border:1.5px solid var(--line);border-radius:9px;padding:10px 16px;
+  font-family:inherit;font-size:13.5px;font-weight:550;color:var(--body);cursor:pointer;transition:.13s}
+.obtns button:hover{border-color:#bfc9d3;color:var(--ink)}
+.obtns .oprim{background:var(--ink);border-color:var(--ink);color:#fff}
+.obtns .oprim:hover{background:#000;color:#fff}
+.onote{font-size:12.5px;color:var(--faint);margin-top:12px;line-height:1.55}
+.opre{display:none;margin:14px 0 0;padding:14px;background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;font-size:11.5px;line-height:1.5;max-height:260px;overflow:auto;white-space:pre-wrap;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--body)}
+
+.fia{background:var(--card);border:1.5px solid var(--line);border-radius:13px;overflow:hidden;margin:34px 0 0}
+.fia .fh{padding:14px 22px;border-bottom:1px solid var(--line2);font-size:11.5px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.fia .fr{padding:15px 22px;border-bottom:1px solid var(--line2);display:flex;gap:15px}
+.fia .fr:last-child{border-bottom:0}
+.fia .fk{flex:0 0 52px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--faint);padding-top:3px}
+.fia .fv{flex:1;font-size:15.5px;line-height:1.5}
+.fia .fr.act{background:#fffaf9}
+.fia .fr.act .fk{color:var(--accent)}
+.fia .fr.act .fv{font-weight:550}
+
+.warn{background:#fffbf0;border:1.5px solid #f0e3c2;border-radius:12px;padding:16px 19px;
+  margin:0 0 26px;font-size:14.5px;color:#6b5525;line-height:1.5}
+.warn b{color:#4a3a13}
+
+.follow{margin-top:34px}
+.fchips{display:flex;flex-direction:column;gap:8px}
+.fchip{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:100px;
+  padding:11px 18px;font-family:inherit;font-size:14.5px;color:var(--ink);cursor:pointer;transition:.13s}
+.fchip:hover{border-color:var(--accent);color:var(--accent)}
+
+.foot{margin-top:32px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;
+  color:var(--faint);line-height:1.65}
+.foot b{color:var(--body);font-weight:600}
+
+.interp{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 26px;font-size:13px;
+  color:var(--body);background:#eef2f5;border-radius:10px;padding:10px 14px}
+.interp.unsure{background:#fffbf0;border:1px solid #f0e3c2;color:#6b5525}
+.interp b{color:var(--deep);font-weight:650}
+.interp.unsure b{color:#4a3a13}
+.interp .ik{color:var(--faint)}
+.interp.unsure .ik{color:#9a834a}
+.interp .isep{color:var(--faint);opacity:.6}
+.ialt{background:#fff;border:1px solid var(--line);border-radius:100px;padding:4px 11px;
+  font-family:inherit;font-size:12.5px;color:var(--deep);cursor:pointer;transition:.13s}
+.ialt:hover{border-color:var(--accent);color:var(--accent)}
+
+.trend{width:100%;text-align:left;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:18px;margin-top:16px;background:var(--card);
+  border:1.5px solid var(--line);border-radius:12px;padding:14px 18px}
+.trend .spark{flex:0 0 auto}
+.trend.nodata{display:block;font-size:13px;color:var(--faint);line-height:1.5}
+.trend .tinfo{flex:1;min-width:0}
+.trend .tgo{flex:0 0 auto;font-size:12.5px;font-weight:650;color:var(--accent);
+  border:1.5px solid var(--line);border-radius:100px;padding:6px 14px}
+.trend:hover .tgo{border-color:var(--accent)}
+.trend.nodata{cursor:default}
+.whybox:empty{display:none}
+.whyinner{background:var(--card);border:1.5px solid var(--line);border-radius:12px;
+  padding:18px 20px;margin-top:8px}
+.corow{display:flex;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid var(--line2)}
+.corow:last-of-type{border-bottom:0}
+.cod{flex:0 0 56px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.cod.up{color:#0f8a5f}.cod.down{color:var(--accent)}
+.col{flex:1;font-size:14.5px;font-weight:550}
+.con{font-size:12.5px;color:var(--faint);white-space:nowrap}
+.coq{font-size:14.5px;color:var(--body);line-height:1.55;padding-left:15px;
+  border-left:3px solid var(--accent);margin-bottom:11px}
+.cosub{font-size:12.5px;color:var(--faint);margin-bottom:11px}
+.cocaveat{margin-top:16px;font-size:12.5px;color:var(--faint);line-height:1.6}
+.cocaveat b{color:var(--body)}
+.trend .tdelta{font-size:19px;font-weight:700;letter-spacing:-.2px}
+.trend .tdelta.up{color:#0f8a5f}.trend .tdelta.down{color:var(--accent)}.trend .tdelta.flat{color:var(--faint)}
+.trend .tsub{font-size:12.5px;color:var(--faint);margin-top:3px;line-height:1.4}
+.movers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:640px){.movers{grid-template-columns:1fr}}
+.mv{background:var(--card);border:1.5px solid var(--line);border-radius:11px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;font-family:inherit;transition:.13s}
+.mv:hover{border-color:var(--accent)}
+.mv .mvd{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;flex:0 0 62px}
+.mv .mvd.up{color:#0f8a5f}.mv .mvd.down{color:var(--accent)}
+.mv .mvl{font-size:14px;font-weight:550;line-height:1.25}
+.mv .mvn{font-size:12px;color:var(--faint);margin-top:2px}
+.tomap{display:inline-block;background:#fff;border:1.5px solid var(--line);border-radius:10px;
+  padding:11px 17px;font-size:14px;font-weight:600;color:var(--ink);text-decoration:none}
+.tomap:hover{border-color:var(--accent);color:var(--accent)}
+.frommap{background:#fff2ef;border:1px solid #ffd7cf;border-radius:9px;padding:9px 13px;
+  font-size:12.5px;color:#b8331c;margin-bottom:16px}
+.backrow{margin-bottom:18px}
+.back{background:none;border:0;color:var(--faint);font-family:inherit;font-size:13.5px;
+  cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px}
+.back:hover{color:var(--ink)}
+.orask{margin-top:14px}
+.orask .lbl{font-size:12.5px;color:var(--faint);margin-bottom:9px}
+</style></head><body>
+
+<div class="topbar" id="topbar"><div class="wrap inner">
+  <div class="mark">G2</div>
+  <div class="wordmark">Compass <span>/ Buyer Demand Intelligence</span></div>
+  <div class="steps"><span class="dot on" id="d1"></span><span class="dot" id="d2"></span><span class="dot" id="d3"></span></div>
+</div></div>
+
+<section class="screen on wrap" id="s1">
+  <p class="eyebrow">Step 1 of 3</p>
+  <h1>Who are your buyers?</h1>
+  <p class="lede">Describe the segment you sell into. Everything after this is counted from real
+    conversations with buyers who match it.</p>
+  <div class="qgroup"><div class="qlabel">Your market</div><div class="cards" id="mkCards"></div></div>
+  <div class="qgroup" id="gBand" style="display:none">
+    <div class="qlabel">Buyer size <em id="unitHint"></em></div>
+    <div class="pills" id="bandPills"></div>
+    <div class="tools"><button id="bAll">Select all</button><button id="bNone">Clear</button></div>
+    <div class="sel-note" id="bNote"></div>
+  </div>
+  <div class="qgroup" id="gInd" style="display:none">
+    <div class="qlabel">Buyer industry <em>optional</em></div>
+    <div class="pills" id="indPills"></div>
+    <div class="tools"><button id="iNone">Clear industries</button></div>
+  </div>
+  <div class="qgroup" id="gComp" style="display:none">
+    <div class="qlabel">Who do you compete with? <em>optional &middot; shapes the questions we suggest</em></div>
+    <div class="pills" id="compPills"></div>
+    <div class="sel-note" id="cNote"></div>
+  </div>
+  <div class="qgroup" id="gRole" style="display:none">
+    <div class="qlabel">Your role <em>changes the recommendation, not the data</em></div>
+    <div class="pills" id="rolePills"></div>
+  </div>
+  <button class="go" id="go1" disabled>Continue</button>
+</section>
+
+<section class="screen wrap" id="s2">
+  <div class="backrow"><button class="back" id="back1">&larr; Back to segment</button></div>
+  <p class="eyebrow">Step 2 of 3</p>
+  <h1>What do you want to know about your buyers?</h1>
+  <p class="lede" id="s2lede"></p>
+  <div class="ask"><input id="ask2" autocomplete="off"><button id="go2">&rarr;</button></div>
+  <div style="margin-top:24px" id="sgList"></div>
+</section>
+
+<section class="screen wrap" id="s3">
+  <div class="backrow"><button class="back" id="back2">&larr; Back to questions</button></div>
+  <div class="ctx" id="ctxBar"></div>
+  <div id="editor"></div>
+  <div id="ans"></div>
+</section>
+
+<script>
+const P = {"markets": {"Human Resources": {"label": "HR and payroll software", "unit": "employees", "blurb": "HR, payroll and HCM software", "bands": {"1-24 employees": {"n": 2384, "today": [{"l": "QuickBooks", "c": 780}, {"l": "No software in place", "c": 674}, {"l": "Spreadsheets", "c": 153}, {"l": "ADP", "c": 146}, {"l": "Paychex", "c": 70}, {"l": "Gusto", "c": 38}, {"l": "BambooHR", "c": 4}, {"l": "Paylocity", "c": 6}, {"l": "Paycom", "c": 7}, {"l": "Rippling", "c": 1}, {"l": "TriNet / Zenefits", "c": 1}, {"l": "isolved", "c": 10}, {"l": "UKG / Kronos", "c": 2}, {"l": "Workday", "c": 1}, {"l": "Insperity", "c": 4}, {"l": "Sage", "c": 40}], "why": [{"l": "Consolidating multiple systems", "c": 195}, {"l": "Escaping manual work", "c": 536}, {"l": "A cost or renewal increase", "c": 363}, {"l": "Poor support", "c": 162}, {"l": "Growth and headcount", "c": 260}, {"l": "A clunky or outdated system", "c": 116}, {"l": "Compliance and tax", "c": 158}], "feat": [{"l": "Payroll processing", "c": 1927}, {"l": "Core HR and personnel records", "c": 565}, {"l": "Time tracking", "c": 744}, {"l": "Benefits administration", "c": 317}, {"l": "Performance management", "c": 55}, {"l": "Employee scheduling", "c": 161}, {"l": "Onboarding", "c": 250}, {"l": "Time off and leave", "c": 236}]}, "25-50 employees": {"n": 997, "today": [{"l": "QuickBooks", "c": 238}, {"l": "No software in place", "c": 225}, {"l": "Spreadsheets", "c": 86}, {"l": "ADP", "c": 127}, {"l": "Paychex", "c": 70}, {"l": "Gusto", "c": 25}, {"l": "BambooHR", "c": 29}, {"l": "Paylocity", "c": 32}, {"l": "Paycom", "c": 14}, {"l": "Rippling", "c": 4}, {"l": "TriNet / Zenefits", "c": 4}, {"l": "isolved", "c": 13}, {"l": "UKG / Kronos", "c": 6}, {"l": "Workday", "c": 1}, {"l": "Insperity", "c": 3}, {"l": "Sage", "c": 35}], "why": [{"l": "Consolidating multiple systems", "c": 138}, {"l": "Escaping manual work", "c": 250}, {"l": "A cost or renewal increase", "c": 113}, {"l": "Poor support", "c": 75}, {"l": "Growth and headcount", "c": 91}, {"l": "A clunky or outdated system", "c": 82}, {"l": "Compliance and tax", "c": 50}], "feat": [{"l": "Payroll processing", "c": 732}, {"l": "Core HR and personnel records", "c": 345}, {"l": "Time tracking", "c": 439}, {"l": "Benefits administration", "c": 245}, {"l": "Performance management", "c": 105}, {"l": "Employee scheduling", "c": 122}, {"l": "Onboarding", "c": 239}, {"l": "Time off and leave", "c": 258}]}, "51-100 employees": {"n": 1145, "today": [{"l": "QuickBooks", "c": 179}, {"l": "No software in place", "c": 241}, {"l": "Spreadsheets", "c": 82}, {"l": "ADP", "c": 225}, {"l": "Paychex", "c": 79}, {"l": "Gusto", "c": 23}, {"l": "BambooHR", "c": 44}, {"l": "Paylocity", "c": 65}, {"l": "Paycom", "c": 34}, {"l": "Rippling", "c": 10}, {"l": "TriNet / Zenefits", "c": 10}, {"l": "isolved", "c": 34}, {"l": "UKG / Kronos", "c": 22}, {"l": "Workday", "c": 2}, {"l": "Insperity", "c": 8}, {"l": "Sage", "c": 29}], "why": [{"l": "Consolidating multiple systems", "c": 176}, {"l": "Escaping manual work", "c": 246}, {"l": "A cost or renewal increase", "c": 192}, {"l": "Poor support", "c": 98}, {"l": "Growth and headcount", "c": 109}, {"l": "A clunky or outdated system", "c": 77}, {"l": "Compliance and tax", "c": 32}], "feat": [{"l": "Payroll processing", "c": 864}, {"l": "Core HR and personnel records", "c": 526}, {"l": "Time tracking", "c": 511}, {"l": "Benefits administration", "c": 430}, {"l": "Performance management", "c": 236}, {"l": "Employee scheduling", "c": 110}, {"l": "Onboarding", "c": 378}, {"l": "Time off and leave", "c": 209}]}, "101-250 employees": {"n": 1300, "today": [{"l": "QuickBooks", "c": 113}, {"l": "No software in place", "c": 199}, {"l": "Spreadsheets", "c": 63}, {"l": "ADP", "c": 254}, {"l": "Paychex", "c": 71}, {"l": "Gusto", "c": 15}, {"l": "BambooHR", "c": 49}, {"l": "Paylocity", "c": 131}, {"l": "Paycom", "c": 85}, {"l": "Rippling", "c": 12}, {"l": "TriNet / Zenefits", "c": 6}, {"l": "isolved", "c": 44}, {"l": "UKG / Kronos", "c": 60}, {"l": "Workday", "c": 2}, {"l": "Insperity", "c": 4}, {"l": "Sage", "c": 35}], "why": [{"l": "Consolidating multiple systems", "c": 193}, {"l": "Escaping manual work", "c": 238}, {"l": "A cost or renewal increase", "c": 210}, {"l": "Poor support", "c": 119}, {"l": "Growth and headcount", "c": 88}, {"l": "A clunky or outdated system", "c": 120}, {"l": "Compliance and tax", "c": 35}], "feat": [{"l": "Payroll processing", "c": 1013}, {"l": "Core HR and personnel records", "c": 626}, {"l": "Time tracking", "c": 624}, {"l": "Benefits administration", "c": 627}, {"l": "Performance management", "c": 364}, {"l": "Employee scheduling", "c": 87}, {"l": "Onboarding", "c": 486}, {"l": "Time off and leave", "c": 171}]}, "251-500 employees": {"n": 675, "today": [{"l": "QuickBooks", "c": 22}, {"l": "No software in place", "c": 80}, {"l": "Spreadsheets", "c": 24}, {"l": "ADP", "c": 172}, {"l": "Paychex", "c": 24}, {"l": "Gusto", "c": 4}, {"l": "BambooHR", "c": 15}, {"l": "Paylocity", "c": 64}, {"l": "Paycom", "c": 49}, {"l": "Rippling", "c": 14}, {"l": "TriNet / Zenefits", "c": 0}, {"l": "isolved", "c": 19}, {"l": "UKG / Kronos", "c": 77}, {"l": "Workday", "c": 5}, {"l": "Insperity", "c": 2}, {"l": "Sage", "c": 15}], "why": [{"l": "Consolidating multiple systems", "c": 102}, {"l": "Escaping manual work", "c": 113}, {"l": "A cost or renewal increase", "c": 115}, {"l": "Poor support", "c": 61}, {"l": "Growth and headcount", "c": 48}, {"l": "A clunky or outdated system", "c": 59}, {"l": "Compliance and tax", "c": 18}], "feat": [{"l": "Payroll processing", "c": 523}, {"l": "Core HR and personnel records", "c": 339}, {"l": "Time tracking", "c": 349}, {"l": "Benefits administration", "c": 385}, {"l": "Performance management", "c": 218}, {"l": "Employee scheduling", "c": 53}, {"l": "Onboarding", "c": 290}, {"l": "Time off and leave", "c": 82}]}, "501-1,000 employees": {"n": 440, "today": [{"l": "QuickBooks", "c": 21}, {"l": "No software in place", "c": 44}, {"l": "Spreadsheets", "c": 14}, {"l": "ADP", "c": 97}, {"l": "Paychex", "c": 6}, {"l": "Gusto", "c": 3}, {"l": "BambooHR", "c": 8}, {"l": "Paylocity", "c": 46}, {"l": "Paycom", "c": 30}, {"l": "Rippling", "c": 0}, {"l": "TriNet / Zenefits", "c": 1}, {"l": "isolved", "c": 9}, {"l": "UKG / Kronos", "c": 65}, {"l": "Workday", "c": 15}, {"l": "Insperity", "c": 0}, {"l": "Sage", "c": 10}], "why": [{"l": "Consolidating multiple systems", "c": 75}, {"l": "Escaping manual work", "c": 73}, {"l": "A cost or renewal increase", "c": 75}, {"l": "Poor support", "c": 33}, {"l": "Growth and headcount", "c": 27}, {"l": "A clunky or outdated system", "c": 41}, {"l": "Compliance and tax", "c": 13}], "feat": [{"l": "Payroll processing", "c": 308}, {"l": "Core HR and personnel records", "c": 206}, {"l": "Time tracking", "c": 199}, {"l": "Benefits administration", "c": 233}, {"l": "Performance management", "c": 133}, {"l": "Employee scheduling", "c": 37}, {"l": "Onboarding", "c": 175}, {"l": "Time off and leave", "c": 54}]}, "1,001+ employees": {"n": 409, "today": [{"l": "QuickBooks", "c": 5}, {"l": "No software in place", "c": 35}, {"l": "Spreadsheets", "c": 11}, {"l": "ADP", "c": 92}, {"l": "Paychex", "c": 3}, {"l": "Gusto", "c": 1}, {"l": "BambooHR", "c": 3}, {"l": "Paylocity", "c": 12}, {"l": "Paycom", "c": 14}, {"l": "Rippling", "c": 1}, {"l": "TriNet / Zenefits", "c": 2}, {"l": "isolved", "c": 11}, {"l": "UKG / Kronos", "c": 83}, {"l": "Workday", "c": 41}, {"l": "Insperity", "c": 0}, {"l": "Sage", "c": 13}], "why": [{"l": "Consolidating multiple systems", "c": 80}, {"l": "Escaping manual work", "c": 47}, {"l": "A cost or renewal increase", "c": 64}, {"l": "Poor support", "c": 34}, {"l": "Growth and headcount", "c": 27}, {"l": "A clunky or outdated system", "c": 30}, {"l": "Compliance and tax", "c": 6}], "feat": [{"l": "Payroll processing", "c": 261}, {"l": "Core HR and personnel records", "c": 192}, {"l": "Time tracking", "c": 186}, {"l": "Benefits administration", "c": 186}, {"l": "Performance management", "c": 99}, {"l": "Employee scheduling", "c": 37}, {"l": "Onboarding", "c": 146}, {"l": "Time off and leave", "c": 69}]}}, "inds": {"Non-Profit": {"n": 853, "today": [{"l": "QuickBooks", "c": 131}, {"l": "No software in place", "c": 174}, {"l": "Spreadsheets", "c": 53}, {"l": "ADP", "c": 133}, {"l": "Paychex", "c": 49}, {"l": "Gusto", "c": 15}, {"l": "BambooHR", "c": 16}, {"l": "Paylocity", "c": 43}, {"l": "Paycom", "c": 54}, {"l": "isolved", "c": 20}, {"l": "UKG / Kronos", "c": 48}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 106}, {"l": "Escaping manual work", "c": 181}, {"l": "A cost or renewal increase", "c": 146}], "feat": [{"l": "Payroll processing", "c": 689}, {"l": "Time tracking", "c": 326}, {"l": "Benefits administration", "c": 291}, {"l": "Employee scheduling", "c": 44}]}, "Healthcare and Medical": {"n": 823, "today": [{"l": "QuickBooks", "c": 99}, {"l": "No software in place", "c": 195}, {"l": "Spreadsheets", "c": 52}, {"l": "ADP", "c": 122}, {"l": "Paychex", "c": 42}, {"l": "Gusto", "c": 11}, {"l": "BambooHR", "c": 21}, {"l": "Paylocity", "c": 45}, {"l": "Paycom", "c": 34}, {"l": "isolved", "c": 13}, {"l": "UKG / Kronos", "c": 41}, {"l": "Workday", "c": 14}], "why": [{"l": "Consolidating multiple systems", "c": 99}, {"l": "Escaping manual work", "c": 172}, {"l": "A cost or renewal increase", "c": 101}], "feat": [{"l": "Payroll processing", "c": 572}, {"l": "Time tracking", "c": 361}, {"l": "Benefits administration", "c": 289}, {"l": "Employee scheduling", "c": 137}]}, "Manufacturing": {"n": 746, "today": [{"l": "QuickBooks", "c": 83}, {"l": "No software in place", "c": 126}, {"l": "Spreadsheets", "c": 50}, {"l": "ADP", "c": 178}, {"l": "Paychex", "c": 37}, {"l": "Gusto", "c": 11}, {"l": "BambooHR", "c": 16}, {"l": "Paylocity", "c": 64}, {"l": "Paycom", "c": 19}, {"l": "isolved", "c": 23}, {"l": "UKG / Kronos", "c": 40}, {"l": "Workday", "c": 4}], "why": [{"l": "Consolidating multiple systems", "c": 83}, {"l": "Escaping manual work", "c": 149}, {"l": "A cost or renewal increase", "c": 86}], "feat": [{"l": "Payroll processing", "c": 564}, {"l": "Time tracking", "c": 320}, {"l": "Benefits administration", "c": 310}, {"l": "Employee scheduling", "c": 49}]}, "Construction and Contracting": {"n": 656, "today": [{"l": "QuickBooks", "c": 189}, {"l": "No software in place", "c": 186}, {"l": "Spreadsheets", "c": 37}, {"l": "ADP", "c": 47}, {"l": "Paychex", "c": 24}, {"l": "Gusto", "c": 1}, {"l": "BambooHR", "c": 14}, {"l": "Paylocity", "c": 16}, {"l": "Paycom", "c": 12}, {"l": "isolved", "c": 10}, {"l": "UKG / Kronos", "c": 17}, {"l": "Workday", "c": 6}], "why": [{"l": "Consolidating multiple systems", "c": 98}, {"l": "Escaping manual work", "c": 169}, {"l": "A cost or renewal increase", "c": 55}], "feat": [{"l": "Payroll processing", "c": 471}, {"l": "Time tracking", "c": 236}, {"l": "Benefits administration", "c": 135}, {"l": "Employee scheduling", "c": 37}]}, "Maintenance and Field Service": {"n": 405, "today": [{"l": "QuickBooks", "c": 119}, {"l": "No software in place", "c": 104}, {"l": "Spreadsheets", "c": 27}, {"l": "ADP", "c": 52}, {"l": "Paychex", "c": 15}, {"l": "Gusto", "c": 6}, {"l": "BambooHR", "c": 6}, {"l": "Paylocity", "c": 9}, {"l": "Paycom", "c": 5}, {"l": "isolved", "c": 7}, {"l": "UKG / Kronos", "c": 7}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 45}, {"l": "Escaping manual work", "c": 96}, {"l": "A cost or renewal increase", "c": 49}], "feat": [{"l": "Payroll processing", "c": 304}, {"l": "Time tracking", "c": 132}, {"l": "Benefits administration", "c": 83}, {"l": "Employee scheduling", "c": 30}]}, "Retail": {"n": 373, "today": [{"l": "QuickBooks", "c": 68}, {"l": "No software in place", "c": 59}, {"l": "Spreadsheets", "c": 14}, {"l": "ADP", "c": 50}, {"l": "Paychex", "c": 14}, {"l": "Gusto", "c": 8}, {"l": "BambooHR", "c": 6}, {"l": "Paylocity", "c": 9}, {"l": "Paycom", "c": 14}, {"l": "isolved", "c": 10}, {"l": "UKG / Kronos", "c": 25}, {"l": "Workday", "c": 2}], "why": [{"l": "Consolidating multiple systems", "c": 47}, {"l": "Escaping manual work", "c": 62}, {"l": "A cost or renewal increase", "c": 53}], "feat": [{"l": "Payroll processing", "c": 309}, {"l": "Time tracking", "c": 154}, {"l": "Benefits administration", "c": 113}, {"l": "Employee scheduling", "c": 55}]}, "Payroll Provider": {"n": 342, "today": [{"l": "QuickBooks", "c": 219}, {"l": "No software in place", "c": 27}, {"l": "Spreadsheets", "c": 10}, {"l": "ADP", "c": 14}, {"l": "Paychex", "c": 4}, {"l": "Gusto", "c": 8}, {"l": "BambooHR", "c": 0}, {"l": "Paylocity", "c": 2}, {"l": "Paycom", "c": 0}, {"l": "isolved", "c": 0}, {"l": "UKG / Kronos", "c": 0}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 26}, {"l": "Escaping manual work", "c": 40}, {"l": "A cost or renewal increase", "c": 81}], "feat": [{"l": "Payroll processing", "c": 337}, {"l": "Time tracking", "c": 5}, {"l": "Benefits administration", "c": 20}, {"l": "Employee scheduling", "c": 5}]}, "Public Sector": {"n": 279, "today": [{"l": "QuickBooks", "c": 14}, {"l": "No software in place", "c": 56}, {"l": "Spreadsheets", "c": 30}, {"l": "ADP", "c": 28}, {"l": "Paychex", "c": 12}, {"l": "Gusto", "c": 0}, {"l": "BambooHR", "c": 4}, {"l": "Paylocity", "c": 1}, {"l": "Paycom", "c": 6}, {"l": "isolved", "c": 1}, {"l": "UKG / Kronos", "c": 13}, {"l": "Workday", "c": 1}], "why": [{"l": "Consolidating multiple systems", "c": 40}, {"l": "Escaping manual work", "c": 76}, {"l": "A cost or renewal increase", "c": 33}], "feat": [{"l": "Payroll processing", "c": 182}, {"l": "Time tracking", "c": 131}, {"l": "Benefits administration", "c": 116}, {"l": "Employee scheduling", "c": 29}]}, "Transportation": {"n": 276, "today": [{"l": "QuickBooks", "c": 37}, {"l": "No software in place", "c": 73}, {"l": "Spreadsheets", "c": 20}, {"l": "ADP", "c": 38}, {"l": "Paychex", "c": 4}, {"l": "Gusto", "c": 3}, {"l": "BambooHR", "c": 6}, {"l": "Paylocity", "c": 15}, {"l": "Paycom", "c": 2}, {"l": "isolved", "c": 4}, {"l": "UKG / Kronos", "c": 8}, {"l": "Workday", "c": 2}], "why": [{"l": "Consolidating multiple systems", "c": 36}, {"l": "Escaping manual work", "c": 64}, {"l": "A cost or renewal increase", "c": 34}], "feat": [{"l": "Payroll processing", "c": 211}, {"l": "Time tracking", "c": 91}, {"l": "Benefits administration", "c": 94}, {"l": "Employee scheduling", "c": 22}]}, "Education": {"n": 252, "today": [{"l": "QuickBooks", "c": 14}, {"l": "No software in place", "c": 51}, {"l": "Spreadsheets", "c": 14}, {"l": "ADP", "c": 38}, {"l": "Paychex", "c": 11}, {"l": "Gusto", "c": 3}, {"l": "BambooHR", "c": 2}, {"l": "Paylocity", "c": 13}, {"l": "Paycom", "c": 17}, {"l": "isolved", "c": 5}, {"l": "UKG / Kronos", "c": 11}, {"l": "Workday", "c": 4}], "why": [{"l": "Consolidating multiple systems", "c": 41}, {"l": "Escaping manual work", "c": 65}, {"l": "A cost or renewal increase", "c": 41}], "feat": [{"l": "Payroll processing", "c": 167}, {"l": "Time tracking", "c": 124}, {"l": "Benefits administration", "c": 91}, {"l": "Employee scheduling", "c": 23}]}, "Consulting": {"n": 221, "today": [{"l": "QuickBooks", "c": 43}, {"l": "No software in place", "c": 42}, {"l": "Spreadsheets", "c": 19}, {"l": "ADP", "c": 32}, {"l": "Paychex", "c": 11}, {"l": "Gusto", "c": 6}, {"l": "BambooHR", "c": 12}, {"l": "Paylocity", "c": 15}, {"l": "Paycom", "c": 2}, {"l": "isolved", "c": 1}, {"l": "UKG / Kronos", "c": 4}, {"l": "Workday", "c": 2}], "why": [{"l": "Consolidating multiple systems", "c": 33}, {"l": "Escaping manual work", "c": 49}, {"l": "A cost or renewal increase", "c": 32}], "feat": [{"l": "Payroll processing", "c": 175}, {"l": "Time tracking", "c": 72}, {"l": "Benefits administration", "c": 78}, {"l": "Employee scheduling", "c": 13}]}, "Software and Technology": {"n": 217, "today": [{"l": "QuickBooks", "c": 16}, {"l": "No software in place", "c": 28}, {"l": "Spreadsheets", "c": 11}, {"l": "ADP", "c": 62}, {"l": "Paychex", "c": 7}, {"l": "Gusto", "c": 5}, {"l": "BambooHR", "c": 13}, {"l": "Paylocity", "c": 17}, {"l": "Paycom", "c": 6}, {"l": "isolved", "c": 5}, {"l": "UKG / Kronos", "c": 4}, {"l": "Workday", "c": 10}], "why": [{"l": "Consolidating multiple systems", "c": 35}, {"l": "Escaping manual work", "c": 23}, {"l": "A cost or renewal increase", "c": 52}], "feat": [{"l": "Payroll processing", "c": 161}, {"l": "Time tracking", "c": 75}, {"l": "Benefits administration", "c": 109}, {"l": "Employee scheduling", "c": 14}]}, "Banking and Financial Services": {"n": 215, "today": [{"l": "QuickBooks", "c": 14}, {"l": "No software in place", "c": 32}, {"l": "Spreadsheets", "c": 11}, {"l": "ADP", "c": 46}, {"l": "Paychex", "c": 9}, {"l": "Gusto", "c": 3}, {"l": "BambooHR", "c": 4}, {"l": "Paylocity", "c": 27}, {"l": "Paycom", "c": 10}, {"l": "isolved", "c": 8}, {"l": "UKG / Kronos", "c": 27}, {"l": "Workday", "c": 3}], "why": [{"l": "Consolidating multiple systems", "c": 29}, {"l": "Escaping manual work", "c": 43}, {"l": "A cost or renewal increase", "c": 26}], "feat": [{"l": "Payroll processing", "c": 171}, {"l": "Time tracking", "c": 90}, {"l": "Benefits administration", "c": 114}, {"l": "Employee scheduling", "c": 16}]}, "Distribution": {"n": 200, "today": [{"l": "QuickBooks", "c": 26}, {"l": "No software in place", "c": 38}, {"l": "Spreadsheets", "c": 11}, {"l": "ADP", "c": 54}, {"l": "Paychex", "c": 10}, {"l": "Gusto", "c": 2}, {"l": "BambooHR", "c": 6}, {"l": "Paylocity", "c": 14}, {"l": "Paycom", "c": 7}, {"l": "isolved", "c": 6}, {"l": "UKG / Kronos", "c": 7}, {"l": "Workday", "c": 3}], "why": [{"l": "Consolidating multiple systems", "c": 25}, {"l": "Escaping manual work", "c": 29}, {"l": "A cost or renewal increase", "c": 29}], "feat": [{"l": "Payroll processing", "c": 162}, {"l": "Time tracking", "c": 73}, {"l": "Benefits administration", "c": 73}, {"l": "Employee scheduling", "c": 13}]}, "Hospitality and Travel": {"n": 187, "today": [{"l": "QuickBooks", "c": 24}, {"l": "No software in place", "c": 29}, {"l": "Spreadsheets", "c": 9}, {"l": "ADP", "c": 37}, {"l": "Paychex", "c": 10}, {"l": "Gusto", "c": 2}, {"l": "BambooHR", "c": 0}, {"l": "Paylocity", "c": 12}, {"l": "Paycom", "c": 13}, {"l": "isolved", "c": 5}, {"l": "UKG / Kronos", "c": 10}, {"l": "Workday", "c": 2}], "why": [{"l": "Consolidating multiple systems", "c": 23}, {"l": "Escaping manual work", "c": 36}, {"l": "A cost or renewal increase", "c": 20}], "feat": [{"l": "Payroll processing", "c": 143}, {"l": "Time tracking", "c": 85}, {"l": "Benefits administration", "c": 74}, {"l": "Employee scheduling", "c": 29}]}, "Food and Beverage": {"n": 177, "today": [{"l": "QuickBooks", "c": 22}, {"l": "No software in place", "c": 45}, {"l": "Spreadsheets", "c": 15}, {"l": "ADP", "c": 35}, {"l": "Paychex", "c": 7}, {"l": "Gusto", "c": 1}, {"l": "BambooHR", "c": 0}, {"l": "Paylocity", "c": 3}, {"l": "Paycom", "c": 3}, {"l": "isolved", "c": 5}, {"l": "UKG / Kronos", "c": 6}, {"l": "Workday", "c": 1}], "why": [{"l": "Consolidating multiple systems", "c": 18}, {"l": "Escaping manual work", "c": 36}, {"l": "A cost or renewal increase", "c": 36}], "feat": [{"l": "Payroll processing", "c": 147}, {"l": "Time tracking", "c": 66}, {"l": "Benefits administration", "c": 65}, {"l": "Employee scheduling", "c": 27}]}, "Accounting and CPA": {"n": 148, "today": [{"l": "QuickBooks", "c": 73}, {"l": "No software in place", "c": 21}, {"l": "Spreadsheets", "c": 2}, {"l": "ADP", "c": 10}, {"l": "Paychex", "c": 7}, {"l": "Gusto", "c": 3}, {"l": "BambooHR", "c": 3}, {"l": "Paylocity", "c": 3}, {"l": "Paycom", "c": 0}, {"l": "isolved", "c": 1}, {"l": "UKG / Kronos", "c": 1}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 15}, {"l": "Escaping manual work", "c": 21}, {"l": "A cost or renewal increase", "c": 34}], "feat": [{"l": "Payroll processing", "c": 125}, {"l": "Time tracking", "c": 16}, {"l": "Benefits administration", "c": 16}, {"l": "Employee scheduling", "c": 6}]}, "Legal": {"n": 123, "today": [{"l": "QuickBooks", "c": 18}, {"l": "No software in place", "c": 19}, {"l": "Spreadsheets", "c": 4}, {"l": "ADP", "c": 19}, {"l": "Paychex", "c": 15}, {"l": "Gusto", "c": 5}, {"l": "BambooHR", "c": 3}, {"l": "Paylocity", "c": 6}, {"l": "Paycom", "c": 5}, {"l": "isolved", "c": 2}, {"l": "UKG / Kronos", "c": 10}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 15}, {"l": "Escaping manual work", "c": 24}, {"l": "A cost or renewal increase", "c": 18}], "feat": [{"l": "Payroll processing", "c": 96}, {"l": "Time tracking", "c": 54}, {"l": "Benefits administration", "c": 55}, {"l": "Employee scheduling", "c": 4}]}, "Staffing Agency": {"n": 82, "today": [{"l": "QuickBooks", "c": 20}, {"l": "No software in place", "c": 22}, {"l": "Spreadsheets", "c": 3}, {"l": "ADP", "c": 3}, {"l": "Paychex", "c": 4}, {"l": "Gusto", "c": 3}, {"l": "BambooHR", "c": 1}, {"l": "Paylocity", "c": 2}, {"l": "Paycom", "c": 5}, {"l": "isolved", "c": 0}, {"l": "UKG / Kronos", "c": 0}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 10}, {"l": "Escaping manual work", "c": 13}, {"l": "A cost or renewal increase", "c": 13}], "feat": [{"l": "Payroll processing", "c": 55}, {"l": "Time tracking", "c": 40}, {"l": "Benefits administration", "c": 15}, {"l": "Employee scheduling", "c": 14}]}, "Real Estate": {"n": 82, "today": [{"l": "QuickBooks", "c": 15}, {"l": "No software in place", "c": 19}, {"l": "Spreadsheets", "c": 8}, {"l": "ADP", "c": 15}, {"l": "Paychex", "c": 1}, {"l": "Gusto", "c": 1}, {"l": "BambooHR", "c": 2}, {"l": "Paylocity", "c": 4}, {"l": "Paycom", "c": 5}, {"l": "isolved", "c": 1}, {"l": "UKG / Kronos", "c": 8}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 11}, {"l": "Escaping manual work", "c": 20}, {"l": "A cost or renewal increase", "c": 11}], "feat": [{"l": "Payroll processing", "c": 59}, {"l": "Time tracking", "c": 30}, {"l": "Benefits administration", "c": 24}, {"l": "Employee scheduling", "c": 4}]}, "Agricultural": {"n": 79, "today": [{"l": "QuickBooks", "c": 34}, {"l": "No software in place", "c": 13}, {"l": "Spreadsheets", "c": 3}, {"l": "ADP", "c": 9}, {"l": "Paychex", "c": 2}, {"l": "Gusto", "c": 0}, {"l": "BambooHR", "c": 2}, {"l": "Paylocity", "c": 2}, {"l": "Paycom", "c": 0}, {"l": "isolved", "c": 0}, {"l": "UKG / Kronos", "c": 4}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 9}, {"l": "Escaping manual work", "c": 9}, {"l": "A cost or renewal increase", "c": 9}], "feat": [{"l": "Payroll processing", "c": 63}, {"l": "Time tracking", "c": 28}, {"l": "Benefits administration", "c": 17}, {"l": "Employee scheduling", "c": 1}]}, "Insurance": {"n": 75, "today": [{"l": "QuickBooks", "c": 7}, {"l": "No software in place", "c": 10}, {"l": "Spreadsheets", "c": 7}, {"l": "ADP", "c": 11}, {"l": "Paychex", "c": 3}, {"l": "Gusto", "c": 1}, {"l": "BambooHR", "c": 0}, {"l": "Paylocity", "c": 8}, {"l": "Paycom", "c": 1}, {"l": "isolved", "c": 0}, {"l": "UKG / Kronos", "c": 2}, {"l": "Workday", "c": 4}], "why": [{"l": "Consolidating multiple systems", "c": 10}, {"l": "Escaping manual work", "c": 14}, {"l": "A cost or renewal increase", "c": 11}], "feat": [{"l": "Payroll processing", "c": 47}, {"l": "Time tracking", "c": 21}, {"l": "Benefits administration", "c": 24}, {"l": "Employee scheduling", "c": 5}]}, "Automotive and Parts Dealer": {"n": 73, "today": [{"l": "QuickBooks", "c": 10}, {"l": "No software in place", "c": 22}, {"l": "Spreadsheets", "c": 1}, {"l": "ADP", "c": 12}, {"l": "Paychex", "c": 3}, {"l": "Gusto", "c": 0}, {"l": "BambooHR", "c": 1}, {"l": "Paylocity", "c": 4}, {"l": "Paycom", "c": 5}, {"l": "isolved", "c": 1}, {"l": "UKG / Kronos", "c": 2}, {"l": "Workday", "c": 2}], "why": [{"l": "Consolidating multiple systems", "c": 9}, {"l": "Escaping manual work", "c": 15}, {"l": "A cost or renewal increase", "c": 13}], "feat": [{"l": "Payroll processing", "c": 56}, {"l": "Time tracking", "c": 21}, {"l": "Benefits administration", "c": 23}, {"l": "Employee scheduling", "c": 2}]}, "Property Management": {"n": 60, "today": [{"l": "QuickBooks", "c": 13}, {"l": "No software in place", "c": 9}, {"l": "Spreadsheets", "c": 1}, {"l": "ADP", "c": 10}, {"l": "Paychex", "c": 3}, {"l": "Gusto", "c": 2}, {"l": "BambooHR", "c": 0}, {"l": "Paylocity", "c": 2}, {"l": "Paycom", "c": 2}, {"l": "isolved", "c": 1}, {"l": "UKG / Kronos", "c": 6}, {"l": "Workday", "c": 0}], "why": [{"l": "Consolidating multiple systems", "c": 5}, {"l": "Escaping manual work", "c": 8}, {"l": "A cost or renewal increase", "c": 13}], "feat": [{"l": "Payroll processing", "c": 46}, {"l": "Time tracking", "c": 30}, {"l": "Benefits administration", "c": 19}, {"l": "Employee scheduling", "c": 6}]}}, "trend": {"1-24 employees": {"n": [3319, 2958, 2854, 2795, 2611, 2590, 2416, 2380], "c": [[572, 1117, 196, 175, 97, 37, 9, 7, 6, 4, 4, 8, 3, 3, 0, 33], [531, 946, 181, 149, 70, 33, 4, 4, 5, 6, 2, 9, 3, 3, 0, 32], [547, 871, 142, 132, 57, 36, 6, 3, 3, 7, 2, 12, 2, 1, 1, 27], [580, 820, 124, 142, 51, 44, 6, 6, 3, 11, 5, 11, 2, 1, 2, 25], [598, 752, 112, 130, 50, 37, 6, 4, 3, 10, 5, 11, 1, 0, 4, 24], [701, 775, 122, 123, 57, 38, 7, 4, 2, 8, 5, 11, 1, 0, 6, 23], [752, 716, 131, 126, 60, 41, 4, 6, 5, 6, 4, 10, 2, 1, 5, 30], [782, 681, 153, 145, 70, 38, 4, 5, 7, 1, 1, 10, 2, 1, 4, 40]]}, "25-50 employees": {"n": [1253, 1132, 1156, 1134, 1114, 1082, 1001, 993], "c": [[169, 389, 145, 125, 48, 17, 21, 17, 3, 4, 7, 13, 6, 4, 4, 23], [148, 307, 112, 113, 40, 15, 22, 18, 4, 3, 7, 7, 8, 3, 4, 19], [170, 295, 96, 124, 42, 18, 17, 19, 7, 2, 7, 7, 7, 3, 5, 13], [181, 261, 90, 118, 55, 14, 15, 20, 9, 2, 8, 10, 7, 1, 6, 16], [200, 229, 75, 106, 64, 20, 14, 21, 14, 3, 6, 8, 6, 0, 6, 15], [217, 233, 88, 128, 70, 22, 15, 26, 15, 4, 8, 10, 4, 0, 6, 24], [222, 224, 85, 123, 69, 19, 19, 25, 13, 4, 7, 12, 4, 1, 3, 34], [238, 226, 86, 126, 70, 25, 29, 31, 14, 4, 4, 13, 6, 1, 3, 34]]}, "51-100 employees": {"n": [1120, 1081, 1082, 1102, 1114, 1144, 1139, 1151], "c": [[115, 296, 118, 152, 44, 20, 26, 32, 15, 8, 5, 27, 14, 2, 5, 25], [104, 272, 100, 136, 44, 16, 26, 28, 14, 8, 5, 25, 11, 4, 4, 23], [98, 218, 81, 122, 52, 18, 30, 34, 13, 8, 8, 26, 10, 4, 2, 20], [134, 210, 77, 141, 62, 18, 33, 30, 14, 5, 11, 22, 10, 4, 3, 22], [134, 204, 76, 165, 79, 19, 38, 35, 12, 8, 13, 18, 11, 3, 5, 18], [158, 221, 80, 185, 88, 22, 41, 50, 19, 8, 14, 26, 17, 3, 5, 27], [185, 242, 81, 218, 86, 24, 41, 57, 21, 8, 11, 31, 22, 2, 8, 27], [176, 242, 82, 225, 78, 23, 43, 65, 36, 11, 11, 34, 22, 2, 8, 29]]}, "101-250 employees": {"n": [1226, 1197, 1194, 1180, 1219, 1224, 1240, 1297], "c": [[85, 328, 100, 189, 71, 5, 43, 71, 50, 6, 4, 16, 36, 6, 4, 35], [69, 292, 93, 174, 66, 5, 34, 73, 53, 4, 3, 14, 33, 3, 3, 28], [72, 245, 87, 169, 58, 7, 29, 78, 49, 7, 5, 15, 30, 3, 3, 24], [70, 201, 69, 177, 53, 6, 26, 96, 60, 10, 6, 20, 30, 2, 1, 29], [93, 181, 59, 193, 57, 8, 30, 108, 69, 12, 5, 33, 35, 2, 3, 27], [102, 188, 60, 208, 61, 13, 40, 115, 77, 14, 9, 34, 43, 2, 4, 33], [106, 195, 60, 247, 59, 13, 45, 126, 86, 13, 8, 41, 54, 2, 4, 34], [112, 201, 63, 254, 72, 15, 51, 131, 84, 12, 6, 44, 61, 2, 4, 34]]}, "251-500 employees": {"n": [657, 627, 625, 630, 631, 660, 662, 675], "c": [[20, 128, 53, 132, 13, 3, 24, 33, 37, 4, 4, 8, 45, 3, 1, 12], [17, 106, 44, 116, 10, 1, 23, 40, 32, 4, 2, 5, 45, 2, 1, 13], [18, 99, 40, 106, 10, 1, 20, 43, 25, 2, 2, 5, 48, 4, 2, 13], [29, 82, 38, 104, 17, 2, 19, 41, 33, 1, 2, 7, 51, 5, 2, 21], [29, 73, 27, 107, 19, 3, 12, 48, 38, 3, 1, 9, 56, 6, 2, 19], [32, 79, 30, 139, 23, 3, 14, 49, 41, 6, 1, 15, 61, 8, 2, 24], [32, 78, 25, 160, 23, 5, 14, 53, 52, 12, 0, 19, 71, 6, 1, 23], [22, 81, 25, 174, 23, 4, 16, 64, 49, 14, 0, 19, 76, 5, 2, 15]]}, "501-1,000 employees": {"n": [369, 351, 361, 372, 400, 406, 425, 438], "c": [[14, 62, 24, 72, 3, 1, 5, 23, 22, 0, 1, 8, 26, 13, 0, 10], [8, 53, 26, 67, 1, 1, 3, 19, 17, 0, 1, 7, 23, 10, 0, 8], [8, 48, 24, 70, 2, 1, 6, 22, 16, 1, 1, 5, 28, 8, 0, 11], [8, 53, 22, 85, 6, 3, 10, 22, 17, 1, 1, 6, 28, 9, 0, 12], [13, 49, 20, 93, 8, 3, 8, 29, 17, 1, 2, 6, 32, 8, 0, 13], [14, 46, 15, 95, 9, 3, 9, 37, 21, 1, 2, 8, 39, 8, 0, 15], [17, 44, 15, 96, 8, 4, 10, 41, 29, 0, 1, 9, 52, 13, 0, 10], [21, 44, 14, 96, 6, 3, 8, 45, 30, 0, 1, 8, 64, 16, 0, 10]]}, "1,001+ employees": {"n": [432, 414, 417, 405, 394, 392, 413, 408], "c": [[10, 64, 25, 87, 2, 1, 1, 17, 11, 1, 0, 3, 77, 35, 0, 10], [7, 57, 24, 80, 2, 1, 0, 17, 11, 1, 0, 1, 78, 32, 1, 9], [4, 56, 24, 85, 1, 2, 2, 16, 10, 2, 0, 2, 63, 29, 1, 8], [7, 44, 22, 75, 1, 2, 2, 14, 10, 2, 0, 2, 54, 31, 1, 9], [6, 38, 20, 74, 2, 1, 2, 9, 9, 1, 0, 3, 54, 28, 1, 7], [6, 36, 17, 78, 2, 1, 2, 11, 8, 1, 0, 7, 51, 33, 0, 9], [6, 31, 16, 88, 2, 1, 2, 13, 11, 1, 2, 9, 77, 43, 0, 14], [5, 35, 11, 92, 3, 1, 3, 12, 15, 1, 2, 11, 82, 41, 0, 13]]}}, "trendKeys": ["QuickBooks", "No software in place", "Spreadsheets", "ADP", "Paychex", "Gusto", "BambooHR", "Paylocity", "Paycom", "Rippling", "TriNet / Zenefits", "isolved", "UKG / Kronos", "Workday", "Insperity", "Sage"]}, "Construction": {"label": "construction management software", "unit": "annual revenue", "blurb": "Construction management and estimating software", "bands": {"Under $1M revenue": {"n": 2251, "today": [{"l": "No software in place", "c": 1069}, {"l": "QuickBooks", "c": 241}, {"l": "Spreadsheets", "c": 190}, {"l": "Procore", "c": 27}, {"l": "Sage", "c": 9}, {"l": "Buildertrend", "c": 13}, {"l": "Bluebeam", "c": 22}, {"l": "Viewpoint / Trimble", "c": 3}, {"l": "Foundation Software", "c": 1}, {"l": "ComputerEase", "c": 0}, {"l": "Knowify", "c": 4}, {"l": "Contractor Foreman", "c": 6}, {"l": "JobTread", "c": 2}, {"l": "CMiC", "c": 0}, {"l": "Jonas", "c": 0}, {"l": "Acumatica", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 1075}, {"l": "Escaping manual work", "c": 495}, {"l": "Growth", "c": 269}, {"l": "Cost or price", "c": 239}, {"l": "Fragmented systems", "c": 159}, {"l": "Outgrowing accounting software", "c": 121}, {"l": "Job costing and margin", "c": 112}], "feat": [{"l": "Estimating", "c": 1245}, {"l": "Project management", "c": 958}, {"l": "Document and photo handling", "c": 836}, {"l": "Scheduling", "c": 316}, {"l": "Accounting integration", "c": 304}, {"l": "Takeoff", "c": 324}, {"l": "Invoicing", "c": 319}, {"l": "Job costing", "c": 255}, {"l": "Change orders and RFIs", "c": 169}, {"l": "Field and mobile access", "c": 70}, {"l": "Time tracking", "c": 39}]}, "$1M-$5M revenue": {"n": 2051, "today": [{"l": "No software in place", "c": 677}, {"l": "QuickBooks", "c": 507}, {"l": "Spreadsheets", "c": 375}, {"l": "Procore", "c": 49}, {"l": "Sage", "c": 25}, {"l": "Buildertrend", "c": 65}, {"l": "Bluebeam", "c": 44}, {"l": "Viewpoint / Trimble", "c": 11}, {"l": "Foundation Software", "c": 7}, {"l": "ComputerEase", "c": 5}, {"l": "Knowify", "c": 7}, {"l": "Contractor Foreman", "c": 24}, {"l": "JobTread", "c": 12}, {"l": "CMiC", "c": 0}, {"l": "Jonas", "c": 0}, {"l": "Acumatica", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 788}, {"l": "Escaping manual work", "c": 561}, {"l": "Growth", "c": 274}, {"l": "Cost or price", "c": 212}, {"l": "Fragmented systems", "c": 281}, {"l": "Outgrowing accounting software", "c": 261}, {"l": "Job costing and margin", "c": 93}], "feat": [{"l": "Estimating", "c": 1127}, {"l": "Project management", "c": 1176}, {"l": "Document and photo handling", "c": 698}, {"l": "Scheduling", "c": 530}, {"l": "Accounting integration", "c": 461}, {"l": "Takeoff", "c": 434}, {"l": "Invoicing", "c": 307}, {"l": "Job costing", "c": 400}, {"l": "Change orders and RFIs", "c": 291}, {"l": "Field and mobile access", "c": 149}, {"l": "Time tracking", "c": 73}]}, "$5M-$10M revenue": {"n": 786, "today": [{"l": "No software in place", "c": 195}, {"l": "QuickBooks", "c": 232}, {"l": "Spreadsheets", "c": 193}, {"l": "Procore", "c": 59}, {"l": "Sage", "c": 46}, {"l": "Buildertrend", "c": 63}, {"l": "Bluebeam", "c": 27}, {"l": "Viewpoint / Trimble", "c": 9}, {"l": "Foundation Software", "c": 4}, {"l": "ComputerEase", "c": 4}, {"l": "Knowify", "c": 2}, {"l": "Contractor Foreman", "c": 8}, {"l": "JobTread", "c": 3}, {"l": "CMiC", "c": 0}, {"l": "Jonas", "c": 2}, {"l": "Acumatica", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 217}, {"l": "Escaping manual work", "c": 211}, {"l": "Growth", "c": 97}, {"l": "Cost or price", "c": 92}, {"l": "Fragmented systems", "c": 143}, {"l": "Outgrowing accounting software", "c": 118}, {"l": "Job costing and margin", "c": 53}], "feat": [{"l": "Estimating", "c": 382}, {"l": "Project management", "c": 519}, {"l": "Document and photo handling", "c": 285}, {"l": "Scheduling", "c": 276}, {"l": "Accounting integration", "c": 221}, {"l": "Takeoff", "c": 148}, {"l": "Invoicing", "c": 107}, {"l": "Job costing", "c": 197}, {"l": "Change orders and RFIs", "c": 157}, {"l": "Field and mobile access", "c": 80}, {"l": "Time tracking", "c": 39}]}, "$10M-$25M revenue": {"n": 617, "today": [{"l": "No software in place", "c": 127}, {"l": "QuickBooks", "c": 145}, {"l": "Spreadsheets", "c": 144}, {"l": "Procore", "c": 69}, {"l": "Sage", "c": 48}, {"l": "Buildertrend", "c": 40}, {"l": "Bluebeam", "c": 34}, {"l": "Viewpoint / Trimble", "c": 12}, {"l": "Foundation Software", "c": 6}, {"l": "ComputerEase", "c": 6}, {"l": "Knowify", "c": 2}, {"l": "Contractor Foreman", "c": 6}, {"l": "JobTread", "c": 3}, {"l": "CMiC", "c": 2}, {"l": "Jonas", "c": 4}, {"l": "Acumatica", "c": 1}], "why": [{"l": "Estimating and bidding", "c": 166}, {"l": "Escaping manual work", "c": 179}, {"l": "Growth", "c": 84}, {"l": "Cost or price", "c": 61}, {"l": "Fragmented systems", "c": 131}, {"l": "Outgrowing accounting software", "c": 90}, {"l": "Job costing and margin", "c": 33}], "feat": [{"l": "Estimating", "c": 259}, {"l": "Project management", "c": 433}, {"l": "Document and photo handling", "c": 227}, {"l": "Scheduling", "c": 224}, {"l": "Accounting integration", "c": 215}, {"l": "Takeoff", "c": 111}, {"l": "Invoicing", "c": 64}, {"l": "Job costing", "c": 160}, {"l": "Change orders and RFIs", "c": 157}, {"l": "Field and mobile access", "c": 69}, {"l": "Time tracking", "c": 28}]}, "$25M-$50M revenue": {"n": 300, "today": [{"l": "No software in place", "c": 60}, {"l": "QuickBooks", "c": 63}, {"l": "Spreadsheets", "c": 71}, {"l": "Procore", "c": 48}, {"l": "Sage", "c": 33}, {"l": "Buildertrend", "c": 13}, {"l": "Bluebeam", "c": 10}, {"l": "Viewpoint / Trimble", "c": 15}, {"l": "Foundation Software", "c": 15}, {"l": "ComputerEase", "c": 4}, {"l": "Knowify", "c": 0}, {"l": "Contractor Foreman", "c": 0}, {"l": "JobTread", "c": 0}, {"l": "CMiC", "c": 1}, {"l": "Jonas", "c": 1}, {"l": "Acumatica", "c": 1}], "why": [{"l": "Estimating and bidding", "c": 65}, {"l": "Escaping manual work", "c": 82}, {"l": "Growth", "c": 46}, {"l": "Cost or price", "c": 42}, {"l": "Fragmented systems", "c": 60}, {"l": "Outgrowing accounting software", "c": 45}, {"l": "Job costing and margin", "c": 20}], "feat": [{"l": "Estimating", "c": 115}, {"l": "Project management", "c": 215}, {"l": "Document and photo handling", "c": 116}, {"l": "Scheduling", "c": 108}, {"l": "Accounting integration", "c": 110}, {"l": "Takeoff", "c": 39}, {"l": "Invoicing", "c": 40}, {"l": "Job costing", "c": 86}, {"l": "Change orders and RFIs", "c": 80}, {"l": "Field and mobile access", "c": 32}, {"l": "Time tracking", "c": 11}]}, "$50M-$100M revenue": {"n": 166, "today": [{"l": "No software in place", "c": 20}, {"l": "QuickBooks", "c": 21}, {"l": "Spreadsheets", "c": 41}, {"l": "Procore", "c": 30}, {"l": "Sage", "c": 25}, {"l": "Buildertrend", "c": 6}, {"l": "Bluebeam", "c": 7}, {"l": "Viewpoint / Trimble", "c": 13}, {"l": "Foundation Software", "c": 7}, {"l": "ComputerEase", "c": 4}, {"l": "Knowify", "c": 0}, {"l": "Contractor Foreman", "c": 1}, {"l": "JobTread", "c": 1}, {"l": "CMiC", "c": 3}, {"l": "Jonas", "c": 3}, {"l": "Acumatica", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 32}, {"l": "Escaping manual work", "c": 41}, {"l": "Growth", "c": 25}, {"l": "Cost or price", "c": 18}, {"l": "Fragmented systems", "c": 38}, {"l": "Outgrowing accounting software", "c": 21}, {"l": "Job costing and margin", "c": 9}], "feat": [{"l": "Estimating", "c": 61}, {"l": "Project management", "c": 121}, {"l": "Document and photo handling", "c": 69}, {"l": "Scheduling", "c": 55}, {"l": "Accounting integration", "c": 62}, {"l": "Takeoff", "c": 27}, {"l": "Invoicing", "c": 11}, {"l": "Job costing", "c": 50}, {"l": "Change orders and RFIs", "c": 41}, {"l": "Field and mobile access", "c": 17}, {"l": "Time tracking", "c": 10}]}, "$100M+ revenue": {"n": 220, "today": [{"l": "No software in place", "c": 25}, {"l": "QuickBooks", "c": 6}, {"l": "Spreadsheets", "c": 32}, {"l": "Procore", "c": 73}, {"l": "Sage", "c": 23}, {"l": "Buildertrend", "c": 4}, {"l": "Bluebeam", "c": 20}, {"l": "Viewpoint / Trimble", "c": 11}, {"l": "Foundation Software", "c": 2}, {"l": "ComputerEase", "c": 4}, {"l": "Knowify", "c": 0}, {"l": "Contractor Foreman", "c": 0}, {"l": "JobTread", "c": 0}, {"l": "CMiC", "c": 3}, {"l": "Jonas", "c": 0}, {"l": "Acumatica", "c": 1}], "why": [{"l": "Estimating and bidding", "c": 52}, {"l": "Escaping manual work", "c": 32}, {"l": "Growth", "c": 30}, {"l": "Cost or price", "c": 17}, {"l": "Fragmented systems", "c": 47}, {"l": "Outgrowing accounting software", "c": 22}, {"l": "Job costing and margin", "c": 5}], "feat": [{"l": "Estimating", "c": 84}, {"l": "Project management", "c": 142}, {"l": "Document and photo handling", "c": 93}, {"l": "Scheduling", "c": 81}, {"l": "Accounting integration", "c": 54}, {"l": "Takeoff", "c": 38}, {"l": "Invoicing", "c": 15}, {"l": "Job costing", "c": 41}, {"l": "Change orders and RFIs", "c": 57}, {"l": "Field and mobile access", "c": 22}, {"l": "Time tracking", "c": 4}]}}, "inds": {"General Contractor": {"n": 1570, "today": [{"l": "No software in place", "c": 433}, {"l": "QuickBooks", "c": 300}, {"l": "Spreadsheets", "c": 289}, {"l": "Procore", "c": 187}, {"l": "Sage", "c": 88}, {"l": "Buildertrend", "c": 81}, {"l": "Bluebeam", "c": 52}, {"l": "Viewpoint / Trimble", "c": 24}, {"l": "Foundation Software", "c": 13}, {"l": "Contractor Foreman", "c": 19}], "why": [{"l": "Estimating and bidding", "c": 474}, {"l": "Escaping manual work", "c": 356}, {"l": "Growth", "c": 213}, {"l": "Fragmented systems", "c": 242}], "feat": [{"l": "Estimating", "c": 784}, {"l": "Project management", "c": 890}, {"l": "Job costing", "c": 188}, {"l": "Scheduling", "c": 508}, {"l": "Takeoff", "c": 257}]}, "Residential Remodeling": {"n": 1147, "today": [{"l": "No software in place", "c": 531}, {"l": "QuickBooks", "c": 146}, {"l": "Spreadsheets", "c": 128}, {"l": "Procore", "c": 6}, {"l": "Sage", "c": 5}, {"l": "Buildertrend", "c": 21}, {"l": "Bluebeam", "c": 3}, {"l": "Viewpoint / Trimble", "c": 0}, {"l": "Foundation Software", "c": 0}, {"l": "Contractor Foreman", "c": 2}], "why": [{"l": "Estimating and bidding", "c": 598}, {"l": "Escaping manual work", "c": 264}, {"l": "Growth", "c": 141}, {"l": "Fragmented systems", "c": 108}], "feat": [{"l": "Estimating", "c": 681}, {"l": "Project management", "c": 481}, {"l": "Job costing", "c": 72}, {"l": "Scheduling", "c": 184}, {"l": "Takeoff", "c": 71}]}, "Home Builder - Custom": {"n": 632, "today": [{"l": "No software in place", "c": 210}, {"l": "QuickBooks", "c": 164}, {"l": "Spreadsheets", "c": 138}, {"l": "Procore", "c": 11}, {"l": "Sage", "c": 15}, {"l": "Buildertrend", "c": 66}, {"l": "Bluebeam", "c": 4}, {"l": "Viewpoint / Trimble", "c": 0}, {"l": "Foundation Software", "c": 0}, {"l": "Contractor Foreman", "c": 11}], "why": [{"l": "Estimating and bidding", "c": 188}, {"l": "Escaping manual work", "c": 161}, {"l": "Growth", "c": 85}, {"l": "Fragmented systems", "c": 95}], "feat": [{"l": "Estimating", "c": 342}, {"l": "Project management", "c": 373}, {"l": "Job costing", "c": 93}, {"l": "Scheduling", "c": 215}, {"l": "Takeoff", "c": 91}]}, "Electrical and Teledata": {"n": 559, "today": [{"l": "No software in place", "c": 181}, {"l": "QuickBooks", "c": 111}, {"l": "Spreadsheets", "c": 86}, {"l": "Procore", "c": 40}, {"l": "Sage", "c": 25}, {"l": "Buildertrend", "c": 3}, {"l": "Bluebeam", "c": 24}, {"l": "Viewpoint / Trimble", "c": 11}, {"l": "Foundation Software", "c": 5}, {"l": "Contractor Foreman", "c": 2}], "why": [{"l": "Estimating and bidding", "c": 251}, {"l": "Escaping manual work", "c": 181}, {"l": "Growth", "c": 79}, {"l": "Fragmented systems", "c": 61}], "feat": [{"l": "Estimating", "c": 303}, {"l": "Project management", "c": 200}, {"l": "Job costing", "c": 62}, {"l": "Scheduling", "c": 108}, {"l": "Takeoff", "c": 166}]}, "Other Specialty Contractor": {"n": 521, "today": [{"l": "No software in place", "c": 176}, {"l": "QuickBooks", "c": 112}, {"l": "Spreadsheets", "c": 84}, {"l": "Procore", "c": 18}, {"l": "Sage", "c": 13}, {"l": "Buildertrend", "c": 9}, {"l": "Bluebeam", "c": 17}, {"l": "Viewpoint / Trimble", "c": 3}, {"l": "Foundation Software", "c": 3}, {"l": "Contractor Foreman", "c": 1}], "why": [{"l": "Estimating and bidding", "c": 184}, {"l": "Escaping manual work", "c": 137}, {"l": "Growth", "c": 63}, {"l": "Fragmented systems", "c": 64}], "feat": [{"l": "Estimating", "c": 262}, {"l": "Project management", "c": 199}, {"l": "Job costing", "c": 65}, {"l": "Scheduling", "c": 114}, {"l": "Takeoff", "c": 103}]}, "Finishing Contractor": {"n": 355, "today": [{"l": "No software in place", "c": 122}, {"l": "QuickBooks", "c": 71}, {"l": "Spreadsheets", "c": 40}, {"l": "Procore", "c": 10}, {"l": "Sage", "c": 7}, {"l": "Buildertrend", "c": 4}, {"l": "Bluebeam", "c": 15}, {"l": "Viewpoint / Trimble", "c": 1}, {"l": "Foundation Software", "c": 1}, {"l": "Contractor Foreman", "c": 3}], "why": [{"l": "Estimating and bidding", "c": 146}, {"l": "Escaping manual work", "c": 89}, {"l": "Growth", "c": 39}, {"l": "Fragmented systems", "c": 40}], "feat": [{"l": "Estimating", "c": 174}, {"l": "Project management", "c": 130}, {"l": "Job costing", "c": 27}, {"l": "Scheduling", "c": 66}, {"l": "Takeoff", "c": 87}]}, "Roofing and Siding": {"n": 244, "today": [{"l": "No software in place", "c": 85}, {"l": "QuickBooks", "c": 52}, {"l": "Spreadsheets", "c": 29}, {"l": "Procore", "c": 10}, {"l": "Sage", "c": 6}, {"l": "Buildertrend", "c": 2}, {"l": "Bluebeam", "c": 5}, {"l": "Viewpoint / Trimble", "c": 0}, {"l": "Foundation Software", "c": 1}, {"l": "Contractor Foreman", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 114}, {"l": "Escaping manual work", "c": 55}, {"l": "Growth", "c": 28}, {"l": "Fragmented systems", "c": 34}], "feat": [{"l": "Estimating", "c": 141}, {"l": "Project management", "c": 91}, {"l": "Job costing", "c": 25}, {"l": "Scheduling", "c": 41}, {"l": "Takeoff", "c": 52}]}, "Earthwork and Excavating": {"n": 202, "today": [{"l": "No software in place", "c": 78}, {"l": "QuickBooks", "c": 49}, {"l": "Spreadsheets", "c": 34}, {"l": "Procore", "c": 6}, {"l": "Sage", "c": 8}, {"l": "Buildertrend", "c": 0}, {"l": "Bluebeam", "c": 4}, {"l": "Viewpoint / Trimble", "c": 6}, {"l": "Foundation Software", "c": 4}, {"l": "Contractor Foreman", "c": 1}], "why": [{"l": "Estimating and bidding", "c": 73}, {"l": "Escaping manual work", "c": 65}, {"l": "Growth", "c": 25}, {"l": "Fragmented systems", "c": 15}], "feat": [{"l": "Estimating", "c": 95}, {"l": "Project management", "c": 74}, {"l": "Job costing", "c": 25}, {"l": "Scheduling", "c": 35}, {"l": "Takeoff", "c": 70}]}, "Concrete": {"n": 189, "today": [{"l": "No software in place", "c": 76}, {"l": "QuickBooks", "c": 41}, {"l": "Spreadsheets", "c": 32}, {"l": "Procore", "c": 9}, {"l": "Sage", "c": 3}, {"l": "Buildertrend", "c": 4}, {"l": "Bluebeam", "c": 12}, {"l": "Viewpoint / Trimble", "c": 1}, {"l": "Foundation Software", "c": 1}, {"l": "Contractor Foreman", "c": 4}], "why": [{"l": "Estimating and bidding", "c": 89}, {"l": "Escaping manual work", "c": 51}, {"l": "Growth", "c": 19}, {"l": "Fragmented systems", "c": 19}], "feat": [{"l": "Estimating", "c": 112}, {"l": "Project management", "c": 78}, {"l": "Job costing", "c": 20}, {"l": "Scheduling", "c": 26}, {"l": "Takeoff", "c": 49}]}, "Mechanical and HVAC": {"n": 179, "today": [{"l": "No software in place", "c": 57}, {"l": "QuickBooks", "c": 30}, {"l": "Spreadsheets", "c": 23}, {"l": "Procore", "c": 7}, {"l": "Sage", "c": 8}, {"l": "Buildertrend", "c": 0}, {"l": "Bluebeam", "c": 7}, {"l": "Viewpoint / Trimble", "c": 8}, {"l": "Foundation Software", "c": 1}, {"l": "Contractor Foreman", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 60}, {"l": "Escaping manual work", "c": 48}, {"l": "Growth", "c": 15}, {"l": "Fragmented systems", "c": 20}], "feat": [{"l": "Estimating", "c": 87}, {"l": "Project management", "c": 64}, {"l": "Job costing", "c": 25}, {"l": "Scheduling", "c": 37}, {"l": "Takeoff", "c": 50}]}, "Construction Manager": {"n": 133, "today": [{"l": "No software in place", "c": 34}, {"l": "QuickBooks", "c": 8}, {"l": "Spreadsheets", "c": 25}, {"l": "Procore", "c": 21}, {"l": "Sage", "c": 1}, {"l": "Buildertrend", "c": 1}, {"l": "Bluebeam", "c": 4}, {"l": "Viewpoint / Trimble", "c": 3}, {"l": "Foundation Software", "c": 1}, {"l": "Contractor Foreman", "c": 1}], "why": [{"l": "Estimating and bidding", "c": 24}, {"l": "Escaping manual work", "c": 32}, {"l": "Growth", "c": 19}, {"l": "Fragmented systems", "c": 16}], "feat": [{"l": "Estimating", "c": 30}, {"l": "Project management", "c": 80}, {"l": "Job costing", "c": 11}, {"l": "Scheduling", "c": 59}, {"l": "Takeoff", "c": 13}]}, "Plumbing": {"n": 110, "today": [{"l": "No software in place", "c": 47}, {"l": "QuickBooks", "c": 22}, {"l": "Spreadsheets", "c": 9}, {"l": "Procore", "c": 2}, {"l": "Sage", "c": 3}, {"l": "Buildertrend", "c": 1}, {"l": "Bluebeam", "c": 2}, {"l": "Viewpoint / Trimble", "c": 7}, {"l": "Foundation Software", "c": 3}, {"l": "Contractor Foreman", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 44}, {"l": "Escaping manual work", "c": 27}, {"l": "Growth", "c": 13}, {"l": "Fragmented systems", "c": 11}], "feat": [{"l": "Estimating", "c": 51}, {"l": "Project management", "c": 26}, {"l": "Job costing", "c": 12}, {"l": "Scheduling", "c": 16}, {"l": "Takeoff", "c": 38}]}, "Utilities": {"n": 91, "today": [{"l": "No software in place", "c": 21}, {"l": "QuickBooks", "c": 21}, {"l": "Spreadsheets", "c": 29}, {"l": "Procore", "c": 7}, {"l": "Sage", "c": 8}, {"l": "Buildertrend", "c": 0}, {"l": "Bluebeam", "c": 1}, {"l": "Viewpoint / Trimble", "c": 5}, {"l": "Foundation Software", "c": 3}, {"l": "Contractor Foreman", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 21}, {"l": "Escaping manual work", "c": 26}, {"l": "Growth", "c": 10}, {"l": "Fragmented systems", "c": 11}], "feat": [{"l": "Estimating", "c": 37}, {"l": "Project management", "c": 48}, {"l": "Job costing", "c": 30}, {"l": "Scheduling", "c": 29}, {"l": "Takeoff", "c": 10}]}, "Landscaping": {"n": 78, "today": [{"l": "No software in place", "c": 30}, {"l": "QuickBooks", "c": 14}, {"l": "Spreadsheets", "c": 10}, {"l": "Procore", "c": 1}, {"l": "Sage", "c": 3}, {"l": "Buildertrend", "c": 0}, {"l": "Bluebeam", "c": 0}, {"l": "Viewpoint / Trimble", "c": 1}, {"l": "Foundation Software", "c": 0}, {"l": "Contractor Foreman", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 27}, {"l": "Escaping manual work", "c": 19}, {"l": "Growth", "c": 11}, {"l": "Fragmented systems", "c": 5}], "feat": [{"l": "Estimating", "c": 34}, {"l": "Project management", "c": 20}, {"l": "Job costing", "c": 11}, {"l": "Scheduling", "c": 21}, {"l": "Takeoff", "c": 10}]}, "Design and Build Firm": {"n": 72, "today": [{"l": "No software in place", "c": 12}, {"l": "QuickBooks", "c": 17}, {"l": "Spreadsheets", "c": 18}, {"l": "Procore", "c": 5}, {"l": "Sage", "c": 3}, {"l": "Buildertrend", "c": 7}, {"l": "Bluebeam", "c": 2}, {"l": "Viewpoint / Trimble", "c": 0}, {"l": "Foundation Software", "c": 1}, {"l": "Contractor Foreman", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 18}, {"l": "Escaping manual work", "c": 21}, {"l": "Growth", "c": 11}, {"l": "Fragmented systems", "c": 15}], "feat": [{"l": "Estimating", "c": 40}, {"l": "Project management", "c": 44}, {"l": "Job costing", "c": 12}, {"l": "Scheduling", "c": 21}, {"l": "Takeoff", "c": 18}]}, "Heavy and Highway Contractor": {"n": 53, "today": [{"l": "No software in place", "c": 12}, {"l": "QuickBooks", "c": 9}, {"l": "Spreadsheets", "c": 19}, {"l": "Procore", "c": 1}, {"l": "Sage", "c": 4}, {"l": "Buildertrend", "c": 0}, {"l": "Bluebeam", "c": 3}, {"l": "Viewpoint / Trimble", "c": 2}, {"l": "Foundation Software", "c": 4}, {"l": "Contractor Foreman", "c": 0}], "why": [{"l": "Estimating and bidding", "c": 15}, {"l": "Escaping manual work", "c": 15}, {"l": "Growth", "c": 7}, {"l": "Fragmented systems", "c": 7}], "feat": [{"l": "Estimating", "c": 18}, {"l": "Project management", "c": 17}, {"l": "Job costing", "c": 8}, {"l": "Scheduling", "c": 14}, {"l": "Takeoff", "c": 5}]}, "Masonry and Stone": {"n": 51, "today": [{"l": "No software in place", "c": 20}, {"l": "QuickBooks", "c": 11}, {"l": "Spreadsheets", "c": 5}, {"l": "Procore", "c": 1}, {"l": "Sage", "c": 0}, {"l": "Buildertrend", "c": 2}, {"l": "Bluebeam", "c": 0}, {"l": "Viewpoint / Trimble", "c": 0}, {"l": "Foundation Software", "c": 0}, {"l": "Contractor Foreman", "c": 1}], "why": [{"l": "Estimating and bidding", "c": 23}, {"l": "Escaping manual work", "c": 8}, {"l": "Growth", "c": 8}, {"l": "Fragmented systems", "c": 7}], "feat": [{"l": "Estimating", "c": 19}, {"l": "Project management", "c": 14}, {"l": "Job costing", "c": 6}, {"l": "Scheduling", "c": 13}, {"l": "Takeoff", "c": 10}]}}, "trend": {"Under $1M revenue": {"n": [3878, 3388, 3217, 3459, 3651, 3484, 3006, 2228], "c": [[1940, 464, 416, 12, 9, 20, 28, 5, 1, 0, 2, 6, 3, 0, 0, 0], [1562, 362, 342, 13, 7, 15, 17, 5, 1, 0, 2, 5, 3, 0, 0, 0], [1297, 315, 297, 17, 5, 21, 14, 5, 1, 0, 1, 8, 1, 0, 0, 0], [1341, 353, 298, 21, 5, 24, 12, 8, 0, 0, 1, 9, 0, 0, 0, 0], [1465, 369, 281, 24, 7, 21, 12, 7, 0, 0, 2, 10, 0, 0, 0, 0], [1502, 363, 271, 26, 9, 24, 16, 7, 0, 0, 3, 11, 1, 0, 0, 0], [1341, 331, 260, 30, 8, 17, 24, 5, 0, 0, 4, 8, 2, 0, 0, 0], [1065, 238, 190, 27, 9, 13, 22, 3, 2, 0, 4, 6, 2, 0, 0, 0]]}, "$1M-$5M revenue": {"n": [2154, 2089, 2162, 2392, 2534, 2443, 2248, 2029], "c": [[751, 475, 364, 38, 31, 67, 51, 6, 5, 1, 2, 14, 3, 1, 1, 0], [656, 427, 296, 37, 34, 71, 43, 4, 5, 0, 2, 17, 3, 1, 1, 0], [609, 422, 297, 41, 30, 76, 34, 8, 4, 1, 4, 16, 4, 2, 0, 0], [644, 521, 350, 55, 33, 87, 38, 10, 2, 1, 7, 20, 5, 1, 0, 0], [678, 564, 350, 58, 32, 81, 37, 13, 3, 1, 10, 23, 3, 1, 0, 0], [729, 563, 375, 53, 27, 69, 39, 14, 6, 2, 9, 25, 6, 1, 0, 0], [691, 531, 381, 56, 29, 67, 43, 11, 6, 3, 8, 27, 8, 0, 0, 0], [676, 498, 371, 49, 24, 65, 44, 10, 7, 5, 8, 25, 13, 0, 0, 0]]}, "$5M-$10M revenue": {"n": [615, 608, 646, 706, 765, 750, 785, 780], "c": [[173, 148, 130, 29, 29, 18, 14, 4, 5, 2, 1, 5, 1, 0, 3, 0], [138, 142, 113, 34, 31, 26, 16, 5, 4, 1, 2, 8, 1, 0, 2, 0], [130, 148, 130, 35, 24, 27, 13, 6, 7, 0, 2, 9, 1, 0, 1, 0], [137, 169, 130, 41, 30, 35, 14, 6, 6, 0, 2, 11, 1, 0, 1, 0], [148, 198, 129, 46, 33, 40, 17, 9, 7, 0, 2, 11, 1, 0, 0, 0], [157, 199, 135, 49, 31, 42, 18, 7, 6, 1, 3, 8, 1, 0, 0, 0], [177, 223, 170, 56, 47, 63, 26, 6, 3, 3, 3, 7, 2, 0, 1, 0], [192, 231, 193, 58, 44, 63, 27, 9, 4, 4, 2, 8, 3, 0, 2, 0]]}, "$10M-$25M revenue": {"n": [522, 492, 540, 611, 637, 640, 619, 623], "c": [[117, 130, 121, 34, 35, 19, 21, 10, 5, 4, 1, 2, 0, 0, 7, 0], [94, 110, 99, 30, 31, 26, 16, 10, 6, 5, 0, 1, 0, 0, 7, 0], [93, 111, 101, 33, 34, 26, 16, 10, 5, 5, 2, 3, 2, 0, 3, 1], [106, 126, 121, 45, 40, 31, 13, 9, 11, 5, 4, 6, 2, 0, 1, 2], [111, 119, 118, 49, 37, 30, 20, 13, 11, 5, 4, 8, 2, 2, 2, 2], [123, 128, 141, 59, 48, 29, 27, 12, 11, 3, 4, 7, 2, 2, 1, 3], [120, 131, 138, 65, 50, 32, 29, 14, 11, 3, 3, 6, 1, 2, 3, 2], [128, 149, 145, 70, 48, 40, 34, 12, 6, 6, 3, 6, 3, 2, 4, 1]]}, "$25M-$50M revenue": {"n": [212, 205, 265, 291, 309, 327, 299, 305], "c": [[37, 42, 63, 25, 21, 9, 13, 6, 3, 4, 0, 0, 0, 0, 1, 3], [33, 38, 48, 25, 19, 9, 10, 6, 3, 2, 0, 0, 0, 0, 1, 3], [36, 41, 66, 36, 32, 11, 13, 6, 2, 0, 0, 1, 0, 0, 0, 3], [42, 47, 71, 48, 34, 11, 10, 7, 3, 0, 0, 1, 0, 0, 0, 3], [48, 46, 82, 52, 35, 12, 10, 8, 6, 3, 0, 1, 0, 0, 0, 2], [56, 55, 91, 58, 38, 11, 13, 9, 7, 3, 0, 1, 0, 0, 0, 1], [56, 58, 75, 56, 30, 13, 9, 11, 10, 3, 0, 0, 0, 0, 1, 1], [62, 64, 72, 49, 34, 13, 10, 15, 15, 5, 0, 0, 0, 1, 1, 1]]}, "$50M-$100M revenue": {"n": [125, 119, 134, 150, 146, 151, 159, 166], "c": [[17, 14, 23, 18, 22, 3, 9, 4, 2, 1, 0, 0, 0, 0, 3, 0], [12, 13, 20, 20, 15, 5, 7, 4, 4, 2, 0, 0, 0, 0, 2, 0], [10, 12, 18, 26, 17, 6, 6, 4, 5, 2, 0, 0, 0, 0, 2, 0], [12, 14, 25, 40, 23, 7, 6, 4, 5, 3, 0, 0, 0, 1, 4, 0], [16, 14, 30, 33, 16, 4, 3, 2, 7, 2, 0, 0, 0, 1, 3, 0], [19, 16, 34, 35, 21, 2, 4, 3, 7, 2, 0, 0, 0, 1, 3, 0], [20, 19, 36, 34, 25, 3, 8, 8, 5, 2, 0, 0, 0, 2, 4, 0], [20, 20, 41, 30, 25, 6, 7, 13, 7, 4, 0, 1, 1, 2, 3, 0]]}, "$100M+ revenue": {"n": [173, 159, 176, 198, 208, 210, 215, 216], "c": [[31, 10, 45, 23, 17, 5, 6, 4, 3, 0, 0, 0, 0, 2, 1, 1], [27, 8, 43, 26, 14, 1, 4, 5, 0, 0, 0, 0, 0, 1, 1, 1], [25, 6, 42, 28, 17, 1, 5, 8, 0, 2, 0, 0, 0, 3, 1, 0], [28, 5, 38, 45, 20, 2, 8, 13, 0, 3, 0, 0, 0, 5, 1, 0], [26, 6, 36, 53, 18, 2, 12, 11, 1, 3, 0, 0, 0, 4, 1, 0], [24, 7, 32, 64, 22, 2, 17, 11, 1, 4, 0, 0, 0, 4, 1, 0], [27, 5, 35, 71, 22, 3, 19, 12, 2, 3, 0, 0, 0, 4, 0, 0], [25, 6, 31, 72, 23, 4, 20, 10, 2, 4, 0, 0, 0, 3, 0, 1]]}}, "trendKeys": ["No software in place", "QuickBooks", "Spreadsheets", "Procore", "Sage", "Buildertrend", "Bluebeam", "Viewpoint / Trimble", "Foundation Software", "ComputerEase", "Knowify", "Contractor Foreman", "JobTread", "CMiC", "Jonas", "Acumatica"]}, "Medical": {"label": "EHR and practice management software", "unit": "doctors", "blurb": "EHR, EMR and medical practice software", "bands": {"Solo practice": {"n": 3391, "today": [{"l": "Paper or no system", "c": 1543}, {"l": "Tebra (Kareo)", "c": 93}, {"l": "Practice Fusion", "c": 44}, {"l": "athenahealth", "c": 42}, {"l": "Office Ally", "c": 35}, {"l": "eClinicalWorks", "c": 38}, {"l": "AdvancedMD", "c": 27}, {"l": "CharmHealth", "c": 19}, {"l": "SimplePractice", "c": 19}, {"l": "Epic", "c": 18}, {"l": "Elation Health", "c": 17}, {"l": "NextGen", "c": 17}, {"l": "DrChrono", "c": 9}, {"l": "Greenway", "c": 6}, {"l": "Amazing Charts", "c": 6}, {"l": "ModMed", "c": 4}, {"l": "Oracle Health (Cerner)", "c": 5}, {"l": "Veradigm (Allscripts)", "c": 2}, {"l": "CareCloud", "c": 2}, {"l": "TherapyNotes", "c": 6}], "why": [{"l": "Opening a new practice", "c": 1006}, {"l": "Documentation speed", "c": 346}, {"l": "Cost", "c": 335}, {"l": "Billing and claims", "c": 305}, {"l": "Wanting one integrated system", "c": 218}, {"l": "Poor support", "c": 179}, {"l": "Moving off paper", "c": 176}, {"l": "A hard-to-use system", "c": 145}], "feat": [{"l": "Scheduling", "c": 2896}, {"l": "EMR, charting and notes", "c": 2778}, {"l": "Billing and claims", "c": 1761}, {"l": "e-prescribing", "c": 1311}, {"l": "Telehealth", "c": 1228}, {"l": "Patient portal and intake", "c": 849}, {"l": "Integrated practice management", "c": 589}, {"l": "Appointment reminders", "c": 562}, {"l": "Note templates", "c": 415}, {"l": "Lab integration", "c": 332}]}, "2 doctors": {"n": 448, "today": [{"l": "Paper or no system", "c": 146}, {"l": "Tebra (Kareo)", "c": 15}, {"l": "Practice Fusion", "c": 10}, {"l": "athenahealth", "c": 21}, {"l": "Office Ally", "c": 5}, {"l": "eClinicalWorks", "c": 12}, {"l": "AdvancedMD", "c": 8}, {"l": "CharmHealth", "c": 4}, {"l": "SimplePractice", "c": 3}, {"l": "Epic", "c": 3}, {"l": "Elation Health", "c": 2}, {"l": "NextGen", "c": 2}, {"l": "DrChrono", "c": 3}, {"l": "Greenway", "c": 1}, {"l": "Amazing Charts", "c": 1}, {"l": "ModMed", "c": 3}, {"l": "Oracle Health (Cerner)", "c": 0}, {"l": "Veradigm (Allscripts)", "c": 3}, {"l": "CareCloud", "c": 1}, {"l": "TherapyNotes", "c": 0}], "why": [{"l": "Opening a new practice", "c": 77}, {"l": "Documentation speed", "c": 62}, {"l": "Cost", "c": 36}, {"l": "Billing and claims", "c": 78}, {"l": "Wanting one integrated system", "c": 45}, {"l": "Poor support", "c": 27}, {"l": "Moving off paper", "c": 37}, {"l": "A hard-to-use system", "c": 36}], "feat": [{"l": "Scheduling", "c": 389}, {"l": "EMR, charting and notes", "c": 372}, {"l": "Billing and claims", "c": 280}, {"l": "e-prescribing", "c": 163}, {"l": "Telehealth", "c": 133}, {"l": "Patient portal and intake", "c": 112}, {"l": "Integrated practice management", "c": 105}, {"l": "Appointment reminders", "c": 91}, {"l": "Note templates", "c": 49}, {"l": "Lab integration", "c": 29}]}, "3 to 5 doctors": {"n": 387, "today": [{"l": "Paper or no system", "c": 83}, {"l": "Tebra (Kareo)", "c": 19}, {"l": "Practice Fusion", "c": 11}, {"l": "athenahealth", "c": 6}, {"l": "Office Ally", "c": 5}, {"l": "eClinicalWorks", "c": 14}, {"l": "AdvancedMD", "c": 13}, {"l": "CharmHealth", "c": 1}, {"l": "SimplePractice", "c": 3}, {"l": "Epic", "c": 10}, {"l": "Elation Health", "c": 4}, {"l": "NextGen", "c": 6}, {"l": "DrChrono", "c": 2}, {"l": "Greenway", "c": 2}, {"l": "Amazing Charts", "c": 1}, {"l": "ModMed", "c": 9}, {"l": "Oracle Health (Cerner)", "c": 2}, {"l": "Veradigm (Allscripts)", "c": 1}, {"l": "CareCloud", "c": 1}, {"l": "TherapyNotes", "c": 0}], "why": [{"l": "Opening a new practice", "c": 37}, {"l": "Documentation speed", "c": 53}, {"l": "Cost", "c": 46}, {"l": "Billing and claims", "c": 70}, {"l": "Wanting one integrated system", "c": 49}, {"l": "Poor support", "c": 29}, {"l": "Moving off paper", "c": 19}, {"l": "A hard-to-use system", "c": 51}], "feat": [{"l": "Scheduling", "c": 325}, {"l": "EMR, charting and notes", "c": 304}, {"l": "Billing and claims", "c": 256}, {"l": "e-prescribing", "c": 93}, {"l": "Telehealth", "c": 94}, {"l": "Patient portal and intake", "c": 112}, {"l": "Integrated practice management", "c": 95}, {"l": "Appointment reminders", "c": 90}, {"l": "Note templates", "c": 46}, {"l": "Lab integration", "c": 31}]}, "6 to 10 doctors": {"n": 134, "today": [{"l": "Paper or no system", "c": 31}, {"l": "Tebra (Kareo)", "c": 2}, {"l": "Practice Fusion", "c": 0}, {"l": "athenahealth", "c": 7}, {"l": "Office Ally", "c": 2}, {"l": "eClinicalWorks", "c": 4}, {"l": "AdvancedMD", "c": 8}, {"l": "CharmHealth", "c": 0}, {"l": "SimplePractice", "c": 0}, {"l": "Epic", "c": 0}, {"l": "Elation Health", "c": 0}, {"l": "NextGen", "c": 3}, {"l": "DrChrono", "c": 1}, {"l": "Greenway", "c": 0}, {"l": "Amazing Charts", "c": 1}, {"l": "ModMed", "c": 0}, {"l": "Oracle Health (Cerner)", "c": 0}, {"l": "Veradigm (Allscripts)", "c": 0}, {"l": "CareCloud", "c": 1}, {"l": "TherapyNotes", "c": 0}], "why": [{"l": "Opening a new practice", "c": 6}, {"l": "Documentation speed", "c": 17}, {"l": "Cost", "c": 13}, {"l": "Billing and claims", "c": 27}, {"l": "Wanting one integrated system", "c": 11}, {"l": "Poor support", "c": 7}, {"l": "Moving off paper", "c": 6}, {"l": "A hard-to-use system", "c": 17}], "feat": [{"l": "Scheduling", "c": 101}, {"l": "EMR, charting and notes", "c": 103}, {"l": "Billing and claims", "c": 89}, {"l": "e-prescribing", "c": 27}, {"l": "Telehealth", "c": 17}, {"l": "Patient portal and intake", "c": 42}, {"l": "Integrated practice management", "c": 25}, {"l": "Appointment reminders", "c": 25}, {"l": "Note templates", "c": 17}, {"l": "Lab integration", "c": 12}]}, "11 to 25 doctors": {"n": 66, "today": [{"l": "Paper or no system", "c": 11}, {"l": "Tebra (Kareo)", "c": 4}, {"l": "Practice Fusion", "c": 1}, {"l": "athenahealth", "c": 3}, {"l": "Office Ally", "c": 5}, {"l": "eClinicalWorks", "c": 2}, {"l": "AdvancedMD", "c": 0}, {"l": "CharmHealth", "c": 0}, {"l": "SimplePractice", "c": 0}, {"l": "Epic", "c": 3}, {"l": "Elation Health", "c": 0}, {"l": "NextGen", "c": 2}, {"l": "DrChrono", "c": 0}, {"l": "Greenway", "c": 3}, {"l": "Amazing Charts", "c": 0}, {"l": "ModMed", "c": 0}, {"l": "Oracle Health (Cerner)", "c": 1}, {"l": "Veradigm (Allscripts)", "c": 1}, {"l": "CareCloud", "c": 0}, {"l": "TherapyNotes", "c": 0}], "why": [{"l": "Opening a new practice", "c": 2}, {"l": "Documentation speed", "c": 9}, {"l": "Cost", "c": 9}, {"l": "Billing and claims", "c": 12}, {"l": "Wanting one integrated system", "c": 7}, {"l": "Poor support", "c": 4}, {"l": "Moving off paper", "c": 6}, {"l": "A hard-to-use system", "c": 5}], "feat": [{"l": "Scheduling", "c": 40}, {"l": "EMR, charting and notes", "c": 50}, {"l": "Billing and claims", "c": 46}, {"l": "e-prescribing", "c": 13}, {"l": "Telehealth", "c": 15}, {"l": "Patient portal and intake", "c": 17}, {"l": "Integrated practice management", "c": 13}, {"l": "Appointment reminders", "c": 7}, {"l": "Note templates", "c": 8}, {"l": "Lab integration", "c": 4}]}, "26+ doctors": {"n": 51, "today": [{"l": "Paper or no system", "c": 3}, {"l": "Tebra (Kareo)", "c": 1}, {"l": "Practice Fusion", "c": 0}, {"l": "athenahealth", "c": 2}, {"l": "Office Ally", "c": 1}, {"l": "eClinicalWorks", "c": 1}, {"l": "AdvancedMD", "c": 2}, {"l": "CharmHealth", "c": 1}, {"l": "SimplePractice", "c": 1}, {"l": "Epic", "c": 1}, {"l": "Elation Health", "c": 0}, {"l": "NextGen", "c": 1}, {"l": "DrChrono", "c": 0}, {"l": "Greenway", "c": 0}, {"l": "Amazing Charts", "c": 0}, {"l": "ModMed", "c": 1}, {"l": "Oracle Health (Cerner)", "c": 1}, {"l": "Veradigm (Allscripts)", "c": 0}, {"l": "CareCloud", "c": 0}, {"l": "TherapyNotes", "c": 2}], "why": [{"l": "Opening a new practice", "c": 2}, {"l": "Documentation speed", "c": 8}, {"l": "Cost", "c": 3}, {"l": "Billing and claims", "c": 15}, {"l": "Wanting one integrated system", "c": 14}, {"l": "Poor support", "c": 0}, {"l": "Moving off paper", "c": 5}, {"l": "A hard-to-use system", "c": 7}], "feat": [{"l": "Scheduling", "c": 36}, {"l": "EMR, charting and notes", "c": 38}, {"l": "Billing and claims", "c": 32}, {"l": "e-prescribing", "c": 10}, {"l": "Telehealth", "c": 14}, {"l": "Patient portal and intake", "c": 16}, {"l": "Integrated practice management", "c": 12}, {"l": "Appointment reminders", "c": 10}, {"l": "Note templates", "c": 6}, {"l": "Lab integration", "c": 8}]}}, "inds": {"Family Medicine": {"n": 835, "today": [{"l": "Paper or no system", "c": 306}, {"l": "Tebra (Kareo)", "c": 38}, {"l": "athenahealth", "c": 18}, {"l": "eClinicalWorks", "c": 26}, {"l": "Practice Fusion", "c": 18}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 12}, {"l": "CharmHealth", "c": 5}, {"l": "Office Ally", "c": 11}, {"l": "Epic", "c": 3}], "why": [{"l": "Opening a new practice", "c": 216}, {"l": "Billing and claims", "c": 53}, {"l": "Documentation speed", "c": 55}, {"l": "Cost", "c": 60}], "feat": [{"l": "Scheduling", "c": 751}, {"l": "EMR, charting and notes", "c": 729}, {"l": "Billing and claims", "c": 451}, {"l": "e-prescribing", "c": 404}, {"l": "Telehealth", "c": 408}]}, "Psychiatry": {"n": 675, "today": [{"l": "Paper or no system", "c": 337}, {"l": "Tebra (Kareo)", "c": 26}, {"l": "athenahealth", "c": 4}, {"l": "eClinicalWorks", "c": 3}, {"l": "Practice Fusion", "c": 7}, {"l": "SimplePractice", "c": 9}, {"l": "AdvancedMD", "c": 4}, {"l": "CharmHealth", "c": 6}, {"l": "Office Ally", "c": 8}, {"l": "Epic", "c": 4}], "why": [{"l": "Opening a new practice", "c": 234}, {"l": "Billing and claims", "c": 51}, {"l": "Documentation speed", "c": 34}, {"l": "Cost", "c": 67}], "feat": [{"l": "Scheduling", "c": 564}, {"l": "EMR, charting and notes", "c": 554}, {"l": "Billing and claims", "c": 433}, {"l": "e-prescribing", "c": 476}, {"l": "Telehealth", "c": 365}]}, "Medical Spa": {"n": 586, "today": [{"l": "Paper or no system", "c": 297}, {"l": "Tebra (Kareo)", "c": 7}, {"l": "athenahealth", "c": 2}, {"l": "eClinicalWorks", "c": 6}, {"l": "Practice Fusion", "c": 2}, {"l": "SimplePractice", "c": 2}, {"l": "AdvancedMD", "c": 0}, {"l": "CharmHealth", "c": 2}, {"l": "Office Ally", "c": 0}, {"l": "Epic", "c": 1}], "why": [{"l": "Opening a new practice", "c": 136}, {"l": "Billing and claims", "c": 13}, {"l": "Documentation speed", "c": 46}, {"l": "Cost", "c": 35}], "feat": [{"l": "Scheduling", "c": 562}, {"l": "EMR, charting and notes", "c": 506}, {"l": "Billing and claims", "c": 137}, {"l": "e-prescribing", "c": 85}, {"l": "Telehealth", "c": 99}]}, "Internal Medicine": {"n": 347, "today": [{"l": "Paper or no system", "c": 162}, {"l": "Tebra (Kareo)", "c": 12}, {"l": "athenahealth", "c": 7}, {"l": "eClinicalWorks", "c": 12}, {"l": "Practice Fusion", "c": 14}, {"l": "SimplePractice", "c": 2}, {"l": "AdvancedMD", "c": 4}, {"l": "CharmHealth", "c": 3}, {"l": "Office Ally", "c": 4}, {"l": "Epic", "c": 7}], "why": [{"l": "Opening a new practice", "c": 83}, {"l": "Billing and claims", "c": 45}, {"l": "Documentation speed", "c": 30}, {"l": "Cost", "c": 31}], "feat": [{"l": "Scheduling", "c": 305}, {"l": "EMR, charting and notes", "c": 296}, {"l": "Billing and claims", "c": 213}, {"l": "e-prescribing", "c": 205}, {"l": "Telehealth", "c": 152}]}, "Chiropractic": {"n": 199, "today": [{"l": "Paper or no system", "c": 47}, {"l": "Tebra (Kareo)", "c": 1}, {"l": "athenahealth", "c": 0}, {"l": "eClinicalWorks", "c": 1}, {"l": "Practice Fusion", "c": 1}, {"l": "SimplePractice", "c": 1}, {"l": "AdvancedMD", "c": 3}, {"l": "CharmHealth", "c": 0}, {"l": "Office Ally", "c": 10}, {"l": "Epic", "c": 0}], "why": [{"l": "Opening a new practice", "c": 19}, {"l": "Billing and claims", "c": 34}, {"l": "Documentation speed", "c": 14}, {"l": "Cost", "c": 40}], "feat": [{"l": "Scheduling", "c": 173}, {"l": "EMR, charting and notes", "c": 147}, {"l": "Billing and claims", "c": 147}, {"l": "e-prescribing", "c": 4}, {"l": "Telehealth", "c": 6}]}, "Physical Therapy and Rehab": {"n": 193, "today": [{"l": "Paper or no system", "c": 63}, {"l": "Tebra (Kareo)", "c": 3}, {"l": "athenahealth", "c": 2}, {"l": "eClinicalWorks", "c": 0}, {"l": "Practice Fusion", "c": 0}, {"l": "SimplePractice", "c": 2}, {"l": "AdvancedMD", "c": 1}, {"l": "CharmHealth", "c": 0}, {"l": "Office Ally", "c": 2}, {"l": "Epic", "c": 0}], "why": [{"l": "Opening a new practice", "c": 47}, {"l": "Billing and claims", "c": 40}, {"l": "Documentation speed", "c": 27}, {"l": "Cost", "c": 19}], "feat": [{"l": "Scheduling", "c": 171}, {"l": "EMR, charting and notes", "c": 163}, {"l": "Billing and claims", "c": 132}, {"l": "e-prescribing", "c": 2}, {"l": "Telehealth", "c": 17}]}, "Alternative and Holistic Medicine": {"n": 121, "today": [{"l": "Paper or no system", "c": 60}, {"l": "Tebra (Kareo)", "c": 2}, {"l": "athenahealth", "c": 2}, {"l": "eClinicalWorks", "c": 0}, {"l": "Practice Fusion", "c": 1}, {"l": "SimplePractice", "c": 2}, {"l": "AdvancedMD", "c": 0}, {"l": "CharmHealth", "c": 1}, {"l": "Office Ally", "c": 0}, {"l": "Epic", "c": 1}], "why": [{"l": "Opening a new practice", "c": 20}, {"l": "Billing and claims", "c": 9}, {"l": "Documentation speed", "c": 14}, {"l": "Cost", "c": 7}], "feat": [{"l": "Scheduling", "c": 112}, {"l": "EMR, charting and notes", "c": 96}, {"l": "Billing and claims", "c": 34}, {"l": "e-prescribing", "c": 26}, {"l": "Telehealth", "c": 43}]}, "Billing Services": {"n": 104, "today": [{"l": "Paper or no system", "c": 31}, {"l": "Tebra (Kareo)", "c": 4}, {"l": "athenahealth", "c": 1}, {"l": "eClinicalWorks", "c": 3}, {"l": "Practice Fusion", "c": 1}, {"l": "SimplePractice", "c": 1}, {"l": "AdvancedMD", "c": 3}, {"l": "CharmHealth", "c": 1}, {"l": "Office Ally", "c": 8}, {"l": "Epic", "c": 1}], "why": [{"l": "Opening a new practice", "c": 13}, {"l": "Billing and claims", "c": 64}, {"l": "Documentation speed", "c": 7}, {"l": "Cost", "c": 16}], "feat": [{"l": "Scheduling", "c": 3}, {"l": "EMR, charting and notes", "c": 15}, {"l": "Billing and claims", "c": 102}, {"l": "e-prescribing", "c": 0}, {"l": "Telehealth", "c": 1}]}, "Bariatrics and Obesity": {"n": 96, "today": [{"l": "Paper or no system", "c": 41}, {"l": "Tebra (Kareo)", "c": 4}, {"l": "athenahealth", "c": 0}, {"l": "eClinicalWorks", "c": 0}, {"l": "Practice Fusion", "c": 1}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 0}, {"l": "CharmHealth", "c": 2}, {"l": "Office Ally", "c": 1}, {"l": "Epic", "c": 0}], "why": [{"l": "Opening a new practice", "c": 26}, {"l": "Billing and claims", "c": 3}, {"l": "Documentation speed", "c": 5}, {"l": "Cost", "c": 7}], "feat": [{"l": "Scheduling", "c": 85}, {"l": "EMR, charting and notes", "c": 84}, {"l": "Billing and claims", "c": 24}, {"l": "e-prescribing", "c": 36}, {"l": "Telehealth", "c": 49}]}, "Psychiatry and Psychology": {"n": 95, "today": [{"l": "Paper or no system", "c": 18}, {"l": "Tebra (Kareo)", "c": 5}, {"l": "athenahealth", "c": 0}, {"l": "eClinicalWorks", "c": 1}, {"l": "Practice Fusion", "c": 4}, {"l": "SimplePractice", "c": 3}, {"l": "AdvancedMD", "c": 8}, {"l": "CharmHealth", "c": 1}, {"l": "Office Ally", "c": 1}, {"l": "Epic", "c": 0}], "why": [{"l": "Opening a new practice", "c": 13}, {"l": "Billing and claims", "c": 15}, {"l": "Documentation speed", "c": 10}, {"l": "Cost", "c": 14}], "feat": [{"l": "Scheduling", "c": 84}, {"l": "EMR, charting and notes", "c": 87}, {"l": "Billing and claims", "c": 78}, {"l": "e-prescribing", "c": 43}, {"l": "Telehealth", "c": 42}]}, "Multi-Specialty": {"n": 82, "today": [{"l": "Paper or no system", "c": 21}, {"l": "Tebra (Kareo)", "c": 3}, {"l": "athenahealth", "c": 1}, {"l": "eClinicalWorks", "c": 0}, {"l": "Practice Fusion", "c": 0}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 1}, {"l": "CharmHealth", "c": 0}, {"l": "Office Ally", "c": 0}, {"l": "Epic", "c": 2}], "why": [{"l": "Opening a new practice", "c": 11}, {"l": "Billing and claims", "c": 8}, {"l": "Documentation speed", "c": 5}, {"l": "Cost", "c": 6}], "feat": [{"l": "Scheduling", "c": 73}, {"l": "EMR, charting and notes", "c": 73}, {"l": "Billing and claims", "c": 44}, {"l": "e-prescribing", "c": 19}, {"l": "Telehealth", "c": 26}]}, "Optometry": {"n": 72, "today": [{"l": "Paper or no system", "c": 25}, {"l": "Tebra (Kareo)", "c": 0}, {"l": "athenahealth", "c": 0}, {"l": "eClinicalWorks", "c": 0}, {"l": "Practice Fusion", "c": 1}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 0}, {"l": "CharmHealth", "c": 0}, {"l": "Office Ally", "c": 0}, {"l": "Epic", "c": 0}], "why": [{"l": "Opening a new practice", "c": 8}, {"l": "Billing and claims", "c": 6}, {"l": "Documentation speed", "c": 4}, {"l": "Cost", "c": 8}], "feat": [{"l": "Scheduling", "c": 58}, {"l": "EMR, charting and notes", "c": 53}, {"l": "Billing and claims", "c": 51}, {"l": "e-prescribing", "c": 7}, {"l": "Telehealth", "c": 2}]}, "Endocrinology": {"n": 71, "today": [{"l": "Paper or no system", "c": 43}, {"l": "Tebra (Kareo)", "c": 0}, {"l": "athenahealth", "c": 0}, {"l": "eClinicalWorks", "c": 1}, {"l": "Practice Fusion", "c": 1}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 0}, {"l": "CharmHealth", "c": 0}, {"l": "Office Ally", "c": 0}, {"l": "Epic", "c": 0}], "why": [{"l": "Opening a new practice", "c": 26}, {"l": "Billing and claims", "c": 2}, {"l": "Documentation speed", "c": 5}, {"l": "Cost", "c": 7}], "feat": [{"l": "Scheduling", "c": 67}, {"l": "EMR, charting and notes", "c": 66}, {"l": "Billing and claims", "c": 25}, {"l": "e-prescribing", "c": 33}, {"l": "Telehealth", "c": 38}]}, "Ob Gyn and Women's Health": {"n": 68, "today": [{"l": "Paper or no system", "c": 20}, {"l": "Tebra (Kareo)", "c": 4}, {"l": "athenahealth", "c": 9}, {"l": "eClinicalWorks", "c": 0}, {"l": "Practice Fusion", "c": 1}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 3}, {"l": "CharmHealth", "c": 1}, {"l": "Office Ally", "c": 0}, {"l": "Epic", "c": 3}], "why": [{"l": "Opening a new practice", "c": 18}, {"l": "Billing and claims", "c": 5}, {"l": "Documentation speed", "c": 5}, {"l": "Cost", "c": 9}], "feat": [{"l": "Scheduling", "c": 58}, {"l": "EMR, charting and notes", "c": 51}, {"l": "Billing and claims", "c": 44}, {"l": "e-prescribing", "c": 27}, {"l": "Telehealth", "c": 22}]}, "Urgent Care": {"n": 66, "today": [{"l": "Paper or no system", "c": 28}, {"l": "Tebra (Kareo)", "c": 4}, {"l": "athenahealth", "c": 3}, {"l": "eClinicalWorks", "c": 1}, {"l": "Practice Fusion", "c": 2}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 2}, {"l": "CharmHealth", "c": 0}, {"l": "Office Ally", "c": 0}, {"l": "Epic", "c": 0}], "why": [{"l": "Opening a new practice", "c": 18}, {"l": "Billing and claims", "c": 8}, {"l": "Documentation speed", "c": 2}, {"l": "Cost", "c": 10}], "feat": [{"l": "Scheduling", "c": 56}, {"l": "EMR, charting and notes", "c": 58}, {"l": "Billing and claims", "c": 39}, {"l": "e-prescribing", "c": 28}, {"l": "Telehealth", "c": 32}]}, "Pain Management": {"n": 50, "today": [{"l": "Paper or no system", "c": 25}, {"l": "Tebra (Kareo)", "c": 2}, {"l": "athenahealth", "c": 6}, {"l": "eClinicalWorks", "c": 4}, {"l": "Practice Fusion", "c": 2}, {"l": "SimplePractice", "c": 0}, {"l": "AdvancedMD", "c": 0}, {"l": "CharmHealth", "c": 0}, {"l": "Office Ally", "c": 1}, {"l": "Epic", "c": 1}], "why": [{"l": "Opening a new practice", "c": 6}, {"l": "Billing and claims", "c": 7}, {"l": "Documentation speed", "c": 7}, {"l": "Cost", "c": 3}], "feat": [{"l": "Scheduling", "c": 44}, {"l": "EMR, charting and notes", "c": 38}, {"l": "Billing and claims", "c": 37}, {"l": "e-prescribing", "c": 29}, {"l": "Telehealth", "c": 15}]}}, "trend": {"Solo practice": {"n": [5820, 5595, 4974, 4436, 4123, 3699, 3569, 3378], "c": [[2824, 138, 108, 122, 68, 57, 53, 21, 26, 26, 22, 30, 20, 7, 9, 13, 7, 11, 3, 12], [2392, 132, 92, 96, 58, 48, 49, 16, 25, 23, 21, 27, 19, 7, 11, 10, 4, 8, 2, 16], [1933, 103, 69, 78, 44, 31, 44, 13, 24, 22, 16, 21, 18, 6, 9, 9, 4, 8, 3, 13], [1563, 101, 60, 78, 41, 34, 43, 12, 18, 20, 19, 21, 14, 1, 9, 10, 4, 8, 2, 10], [1392, 99, 49, 65, 33, 31, 33, 18, 12, 20, 18, 22, 15, 4, 10, 10, 4, 6, 3, 8], [1514, 90, 54, 52, 35, 36, 34, 19, 16, 18, 17, 20, 13, 4, 8, 8, 4, 6, 4, 4], [1615, 90, 54, 48, 37, 42, 34, 20, 16, 16, 20, 17, 11, 6, 6, 6, 4, 4, 2, 6], [1537, 93, 44, 40, 35, 38, 27, 19, 19, 18, 17, 17, 9, 7, 6, 4, 6, 2, 2, 6]]}, "2 doctors": {"n": [808, 785, 681, 580, 593, 515, 452, 446], "c": [[256, 31, 22, 24, 18, 22, 17, 1, 2, 10, 3, 9, 9, 4, 4, 4, 1, 2, 1, 1], [213, 30, 18, 23, 11, 20, 15, 1, 2, 8, 3, 11, 8, 2, 4, 4, 2, 2, 1, 2], [181, 24, 14, 15, 11, 11, 15, 0, 2, 5, 3, 8, 7, 1, 6, 3, 2, 1, 0, 1], [142, 18, 13, 13, 11, 12, 10, 0, 1, 3, 3, 9, 4, 1, 5, 2, 2, 0, 0, 1], [146, 17, 14, 14, 8, 12, 9, 0, 2, 3, 1, 5, 4, 0, 3, 1, 2, 1, 0, 1], [153, 13, 12, 15, 8, 12, 9, 1, 3, 3, 2, 4, 5, 0, 4, 1, 1, 1, 0, 0], [152, 9, 9, 15, 5, 14, 6, 2, 3, 2, 2, 3, 3, 1, 1, 2, 1, 1, 1, 0], [143, 15, 10, 21, 5, 12, 8, 4, 3, 3, 2, 2, 3, 1, 1, 3, 0, 3, 1, 0]]}, "3 to 5 doctors": {"n": [683, 657, 581, 505, 470, 444, 411, 385], "c": [[140, 24, 21, 25, 10, 13, 18, 1, 5, 4, 4, 9, 13, 2, 4, 6, 0, 3, 5, 4], [130, 29, 15, 25, 9, 15, 19, 1, 5, 4, 3, 10, 14, 2, 3, 6, 0, 2, 5, 3], [105, 24, 10, 18, 8, 12, 15, 2, 3, 3, 3, 13, 12, 2, 3, 3, 0, 1, 4, 2], [95, 21, 13, 15, 7, 9, 11, 4, 2, 3, 2, 9, 6, 2, 2, 2, 0, 1, 2, 3], [93, 20, 10, 10, 5, 9, 10, 4, 0, 7, 4, 7, 3, 2, 1, 5, 0, 2, 2, 1], [96, 17, 15, 8, 3, 9, 8, 4, 1, 7, 4, 8, 2, 2, 1, 7, 1, 1, 2, 1], [99, 21, 15, 8, 4, 11, 9, 3, 1, 8, 3, 6, 1, 2, 1, 9, 1, 1, 2, 1], [83, 19, 10, 6, 4, 14, 13, 1, 3, 10, 4, 6, 2, 2, 1, 9, 2, 1, 1, 0]]}, "6 to 10 doctors": {"n": [287, 284, 237, 206, 180, 155, 147, 134], "c": [[49, 16, 3, 12, 6, 10, 12, 1, 1, 3, 1, 4, 4, 3, 0, 0, 3, 4, 2, 2], [41, 17, 2, 13, 4, 8, 9, 1, 1, 2, 2, 2, 7, 2, 0, 0, 3, 4, 2, 3], [29, 10, 3, 12, 5, 3, 4, 2, 1, 1, 2, 3, 6, 0, 0, 0, 2, 4, 1, 4], [25, 7, 2, 13, 2, 4, 3, 2, 0, 0, 2, 3, 3, 1, 0, 0, 1, 3, 0, 4], [19, 4, 2, 11, 2, 4, 8, 2, 0, 0, 1, 4, 3, 1, 1, 0, 0, 0, 1, 2], [26, 3, 2, 10, 3, 4, 8, 1, 0, 0, 0, 5, 0, 1, 1, 0, 0, 0, 1, 1], [31, 2, 0, 9, 2, 4, 9, 0, 0, 0, 0, 4, 0, 1, 1, 0, 0, 0, 1, 0], [31, 2, 0, 7, 2, 4, 8, 0, 0, 0, 0, 3, 1, 0, 1, 0, 0, 0, 1, 0]]}, "11 to 25 doctors": {"n": [194, 195, 169, 144, 117, 75, 60, 65], "c": [[16, 7, 4, 4, 5, 7, 6, 0, 1, 6, 2, 4, 1, 5, 0, 1, 2, 3, 1, 5], [13, 10, 4, 4, 4, 4, 5, 0, 1, 4, 2, 4, 2, 5, 0, 1, 2, 2, 1, 4], [14, 10, 2, 3, 3, 2, 3, 0, 1, 2, 2, 3, 1, 5, 0, 1, 2, 1, 1, 2], [12, 7, 2, 4, 1, 2, 3, 0, 1, 1, 0, 2, 1, 3, 0, 2, 2, 0, 1, 0], [11, 4, 1, 4, 2, 2, 1, 0, 1, 0, 0, 1, 1, 3, 0, 1, 1, 0, 0, 0], [12, 1, 0, 3, 2, 2, 0, 0, 1, 0, 0, 1, 0, 2, 0, 1, 0, 0, 0, 0], [9, 4, 1, 4, 5, 2, 0, 0, 1, 1, 0, 0, 0, 2, 0, 1, 1, 0, 0, 0], [11, 4, 1, 3, 5, 2, 0, 0, 0, 3, 0, 2, 0, 2, 0, 0, 1, 1, 0, 0]]}, "26+ doctors": {"n": [134, 126, 122, 90, 79, 64, 50, 51], "c": [[14, 1, 0, 9, 2, 3, 4, 0, 0, 10, 1, 3, 2, 1, 0, 0, 4, 1, 0, 2], [14, 0, 0, 6, 3, 4, 5, 0, 0, 11, 1, 1, 1, 1, 0, 0, 3, 1, 0, 2], [13, 0, 0, 2, 3, 4, 4, 0, 0, 8, 1, 0, 1, 1, 0, 0, 3, 0, 0, 0], [12, 2, 0, 1, 1, 3, 3, 0, 0, 5, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0], [8, 2, 0, 2, 1, 3, 3, 0, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1], [5, 3, 0, 2, 1, 3, 2, 1, 1, 2, 0, 0, 0, 0, 0, 1, 1, 0, 0, 2], [3, 3, 0, 2, 1, 1, 2, 1, 1, 2, 0, 1, 0, 0, 0, 1, 1, 0, 0, 2], [3, 1, 0, 2, 1, 1, 2, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 2]]}}, "trendKeys": ["Paper or no system", "Tebra (Kareo)", "Practice Fusion", "athenahealth", "Office Ally", "eClinicalWorks", "AdvancedMD", "CharmHealth", "SimplePractice", "Epic", "Elation Health", "NextGen", "DrChrono", "Greenway", "Amazing Charts", "ModMed", "Oracle Health (Cerner)", "Veradigm (Allscripts)", "CareCloud", "TherapyNotes"]}}, "roles": {"pmm": {"name": "Product Marketing", "short": "Product Marketing"}, "sales": {"name": "Sales & Enablement", "short": "Sales"}, "paid": {"name": "Demand Gen & Paid", "short": "Demand Gen"}, "product": {"name": "Product Management", "short": "Product"}, "exec": {"name": "Executive", "short": "Exec"}}, "questions": {"today": {"q": "What are these buyers using today?", "kicker": "Incumbent landscape", "chip": "What are they using today?"}, "why": {"q": "Why are they shopping for something new?", "kicker": "Switching triggers", "chip": "Why are they shopping?"}, "feat": {"q": "What capabilities are they asking for?", "kicker": "Requirement demand", "chip": "What capabilities do they want?"}}, "impact": {"today_green": "There is no incumbent to displace here. {tp}% of this segment is buying software for the first time, so you are competing against inertia, not against a vendor.", "today_vendor": "{tp}% of this segment already runs {top}. Every deal you win here is a displacement, not a greenfield sale.", "why": "{top} shows up in {tc} of {n} conversations. It is the single most common reason this segment enters the market at all.", "feat": "{tp}% ask for {top} without being prompted. It does not differentiate you here, it qualifies you."}, "act": {"pmm|today_green": "Rewrite your top-of-funnel message around hours and money recovered, not feature parity. Name the spreadsheet as the incumbent and put a number on what it costs them every month.", "sales|today_green": "Retire the competitive battlecard for this segment. Build a cost-of-doing-nothing discovery script that makes the manual process expensive out loud before you demo anything.", "paid|today_green": "Bid on problem keywords, not competitor keywords. Your ad should describe the manual process they are living in, not the software category you sell.", "product|today_green": "Prioritise spreadsheet import and time-to-first-value over competitive feature parity. In this segment onboarding is the product.", "exec|today_green": "Fund category education over competitive displacement here. You are selling against inertia, and inertia has no sales team, no pricing page and no renewal date.", "pmm|today_vendor": "Build a named comparison page for {top} and lead it with the reason its users leave, not with a feature table.", "sales|today_vendor": "Write a displacement play against {top}. Open discovery by asking what breaks in {top} specifically at their size.", "paid|today_vendor": "Run conquest campaigns on {top} brand terms, and make the landing page resolve the switching reason rather than list features.", "product|today_vendor": "Put a migration path from {top} on the roadmap and treat import fidelity as a competitive feature, because it is one.", "exec|today_vendor": "Treat {top} as the real competitor in this segment, then check whether your win-loss reporting even tracks it. If it does not, you are flying blind.", "pmm|why": "Make {top} the first line of your homepage and your pitch. Cut any message that does not resolve it.", "sales|why": "Make {top} your opening discovery question. Reps who name it in the first five minutes earn the right to the rest of the call.", "paid|why": "Use {top} as the ad headline in the buyer's own words, and have the landing page resolve it above the fold.", "product|why": "Audit where your own product causes {top}. It is a churn driver as much as an acquisition driver.", "exec|why": "Sanity-check the roadmap against {top}. Anything that does not address it is a bet against {tp}% of live demand.", "pmm|feat": "If {top} is not proven above the fold with a screenshot or a number, you are losing deals before anyone reaches the demo.", "sales|feat": "Lead the demo with {top}. Anything else in the first five minutes is costing you the deal.", "paid|feat": "Put {top} in the ad headline, not the feature grid. It is what {tp}% of this segment is typing into a search box.", "product|feat": "Weight the roadmap toward {top}, then differentiate on what ranks second and third. At {tp}% the top item is the price of entry, not an advantage.", "exec|feat": "Confirm {top} is genuinely table stakes in your product before funding anything further down this list."}, "aliases": {"adp": "ADP", "quickbooks": "QuickBooks", "quick books": "QuickBooks", "qb": "QuickBooks", "qbo": "QuickBooks", "paychex": "Paychex", "gusto": "Gusto", "bamboo": "BambooHR", "bamboohr": "BambooHR", "paylocity": "Paylocity", "paycom": "Paycom", "rippling": "Rippling", "trinet": "TriNet / Zenefits", "zenefits": "TriNet / Zenefits", "isolved": "isolved", "ukg": "UKG / Kronos", "kronos": "UKG / Kronos", "workday": "Workday", "insperity": "Insperity", "sage": "Sage", "spreadsheet": "Spreadsheets", "spreadsheets": "Spreadsheets", "excel": "Spreadsheets", "procore": "Procore", "buildertrend": "Buildertrend", "bluebeam": "Bluebeam", "viewpoint": "Viewpoint / Trimble", "trimble": "Viewpoint / Trimble", "foundation": "Foundation Software", "computerease": "ComputerEase", "knowify": "Knowify", "contractor foreman": "Contractor Foreman", "jobtread": "JobTread", "cmic": "CMiC", "jonas": "Jonas", "acumatica": "Acumatica", "tebra": "Tebra (Kareo)", "kareo": "Tebra (Kareo)", "practice fusion": "Practice Fusion", "athena": "athenahealth", "athenahealth": "athenahealth", "eclinicalworks": "eClinicalWorks", "ecw": "eClinicalWorks", "simplepractice": "SimplePractice", "advancedmd": "AdvancedMD", "charm": "CharmHealth", "charmhealth": "CharmHealth", "office ally": "Office Ally", "epic": "Epic", "elation": "Elation Health", "nextgen": "NextGen", "drchrono": "DrChrono", "greenway": "Greenway", "amazing charts": "Amazing Charts", "modmed": "ModMed", "cerner": "Oracle Health (Cerner)", "allscripts": "Veradigm (Allscripts)", "veradigm": "Veradigm (Allscripts)", "carecloud": "CareCloud", "therapynotes": "TherapyNotes", "paper": "Paper or no system", "nothing": "No software in place"}, "floor": 50, "corpus": {"total": 258015, "window": "rolling 12 months to 19th August 2026", "first": "23rd June 2022"}, "quotes": {"Human Resources": {"today": ["They currently have ADP as their HRIS, and their retirement benefit runs through a separate provider.", "Right now they use Excel spreadsheets, pen and paper. They have someone else do their payroll and benefits.", "The company does not have a formal onboarding or personnel tracking solution.", "They use isolved for HRIS and their performance module. They also do some of the performance reviews manually.", "They have in-house management for HR, nothing really software related. A third party handles payroll."], "why": ["They want to streamline and make it easier to manage staff information and hours, since they are doing it all by hand, which takes more time.", "Forced to transition to a new platform because the current provider is discontinuing support and subscriptions for their edition next year.", "It is very expensive for them to use ADP for their Canadian employees, so they are looking for a separate system.", "Their renewal is up on 1st June, and the renewal contract they received has increased by 56% just for the benefits administration component.", "They possibly want to replace Paycom. They want to evaluate other options to compare features and pricing."], "feat": ["The system should allow employees to clock in and clock out in order to generate reports on hours for payroll. They want something very easy to use.", "They need an HRIS with personnel tracking, payroll, benefits, and time and attendance.", "They only need a solution that will allow everyone to clock in and out each day, then generate timesheet reports to send to their payroll provider.", "They only need a solution that will help them track employee clock-in and clock-out times, as well as PTO balances and requests.", "They need an HRIS with personnel tracking, payroll, benefits and PTO tracking. They plan to keep their time tracking application."]}, "Construction": {"today": ["They are currently using manual methods to oversee their construction projects.", "The buyer is currently using QuickBooks, with quotes being created manually.", "All of their project tracking is handled on Excel spreadsheets. They also use Sage for accounting.", "The buyer is using an old program they developed themselves.", "They just signed up for a QuickBooks subscription, and are willing to switch if they find a better suited system."], "why": ["The buyer wants to move away from manual processes because they are time-consuming and lead to errors. Estimating is currently the most difficult part of their workflow.", "They are looking for a system to centralise information and communication, so customers can see updates and everyone stays up to date in one spot.", "The owner is feeling overwhelmed and is looking for a system to streamline operations and make things flow more easily.", "The buyer has no particular issues with their current software, but likes to periodically review the market for alternatives.", "The buyer is taking over the business from their grandfather and father, who ran things old school. They want to modernise and use software."], "feat": ["The primary functional requirement is a solution capable of performing material takeoffs to generate comprehensive material lists and quantities.", "They are looking for an integrated suite of project management, estimating and takeoff. They definitely do not want to have to buy multiple systems.", "Their biggest need is an estimating feature that can price their jobs out quickly and accurately. They also need project management integrated.", "Estimating and project management in an integrated suite. Estimating is the core need.", "They are looking for a system with estimating, project scheduling and project management."]}, "Medical": {"today": ["No software is currently in place. The practice is still being set up and has not implemented an EMR, telehealth platform or scheduling system.", "They have no platform in place, although they do have a free trial running.", "The clinic is a startup-style operation that is re-establishing its processes and does not currently have an EMR in place for patient notes.", "They are currently using Office Ally and a separate tool for billing, and another system for their EMR and documentation.", "They are currently using ModMed, having switched from Nextech. They also use separate tools for documents and scheduling."], "why": ["The primary motivation for seeking a new system is to move away from their time-consuming paper charts and adopt a more efficient electronic method.", "They have grown and are offering additional services. They need a better system to handle the growth.", "They are going to start offering telehealth services and want to find a system that is HIPAA-compliant.", "Their current system has been glitching and will not save appointments. They came into the office to a cleared calendar when they were supposed to have a full day of patients.", "The buyer is evaluating the market for the best fit for their practice. They want a robust EMR with CRM and marketing tools integrated, plus a strong patient portal."], "feat": ["They are looking for an EMR for all patient records, notes and treatment plans. They will need tools for telemedicine visits and electronic prescriptions.", "Capture patient information and medical history, upload or use pre-made intake forms, paperless charting, manage treatment plans, and a patient portal for communication.", "The primary requirements are electronic charting and managing appointments. They want a system that is easy to learn and comes with good training and support.", "They are looking for an EMR with scheduling capability. They would like to track progress notes and medical history, set appointments and send reminders.", "They are just looking for a medical billing system. They deal mostly with workers comp and personal injury cases."]}}, "trendEnds": ["Nov 2024", "Feb 2025", "May 2025", "Aug 2025", "Nov 2025", "Feb 2026", "May 2026", "Aug 2026"]};
+const S = {market:null, bands:[], inds:[], role:"pmm", q:"today", entity:null, typed:null,
+           editing:null, conf:"high", comps:[], artifact:null, fmt:null, qsubj:null};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = n => n.toLocaleString();
+const fill = (t,o) => String(t).replace(/\{(\w+)\}/g, (_,k)=> o[k]!==undefined ? o[k] : "");
+
+addEventListener("scroll",()=>$("#topbar").classList.toggle("stuck", scrollY>8));
+
+function show(step, keepScroll){
+  ["s1","s2","s3"].forEach((id,i)=>$("#"+id).classList.toggle("on", i===step-1));
+  [1,2,3].forEach(i=>$("#d"+i).className = "dot"+(i===step?" on":i<step?" done":""));
+  if(!keepScroll) scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------------- step 1 ---------------- */
+$("#mkCards").innerHTML = Object.entries(P.markets).map(([k,m])=>
+  `<button class="card" data-mk="${k}"><div class="ct">${k}</div><div class="cs">${m.blurb}</div></button>`).join("");
+$("#rolePills").innerHTML = Object.entries(P.roles).map(([k,r])=>
+  `<button class="pill${k==="pmm"?" sel":""}" data-role="${k}">${r.name}</button>`).join("");
+
+function paintBands(){
+  const m=P.markets[S.market];
+  $("#bandPills").innerHTML = Object.entries(m.bands).map(([b,d])=>
+    `<button class="pill${S.bands.includes(b)?" sel":""}" data-band="${esc(b)}">${b}<span class="np">${fmt(d.n)}</span>${S.bands.includes(b)?'<span class="x">&times;</span>':''}</button>`).join("");
+  document.querySelectorAll("[data-band]").forEach(x=>x.onclick=()=>{
+    const b=x.dataset.band;
+    S.bands.includes(b) ? S.bands.splice(S.bands.indexOf(b),1) : S.bands.push(b);
+    paintBands(); step1State();
+  });
+}
+function paintInds(){
+  const m=P.markets[S.market];
+  $("#indPills").innerHTML = Object.entries(m.inds).map(([b,d])=>
+    `<button class="pill${S.inds.includes(b)?" sel":""}" data-ind="${esc(b)}">${b}<span class="np">${fmt(d.n)}</span>${S.inds.includes(b)?'<span class="x">&times;</span>':''}</button>`).join("");
+  document.querySelectorAll("[data-ind]").forEach(x=>x.onclick=()=>{
+    const b=x.dataset.ind;
+    S.inds.includes(b) ? S.inds.splice(S.inds.indexOf(b),1) : S.inds.push(b);
+    paintInds(); step1State();
+  });
+}
+// Named vendors we can actually count in this market, biggest first.
+// Only these can be offered as competitors - anything else has no defensible number.
+function trackedVendors(){
+  const m=P.markets[S.market]; if(!m) return [];
+  const acc={};
+  Object.values(m.bands).forEach(d=>d.today.forEach(r=>acc[r.l]=(acc[r.l]||0)+r.c));
+  return Object.entries(acc)
+    .filter(([l])=>!/^(No software|Paper or no|Spreadsheets)/.test(l))
+    .sort((a,b)=>b[1]-a[1]).slice(0,12).map(([l,c])=>({l,c}));
+}
+function paintComps(){
+  $("#compPills").innerHTML = trackedVendors().map(v=>
+    `<button class="pill${S.comps.includes(v.l)?" sel":""}" data-comp="${esc(v.l)}">${esc(v.l)}</button>`).join("");
+  document.querySelectorAll("[data-comp]").forEach(x=>x.onclick=()=>{
+    const v=x.dataset.comp;
+    S.comps.includes(v) ? S.comps.splice(S.comps.indexOf(v),1)
+                        : (S.comps.length<5 && S.comps.push(v));
+    paintComps(); step1State();
+  });
+  $("#cNote").innerHTML = S.comps.length
+    ? `We will suggest questions about ${S.comps.map(c=>"<b>"+esc(c)+"</b>").join(", ")}.`
+      + (S.comps.length>=5 ? " Five is the maximum." : "")
+    : "Pick up to five. Only vendors named often enough to clear the "+P.floor+"-conversation floor are listed.";
+}
+function step1State(){
+  const r=resolve();
+  $("#bNote").innerHTML = S.bands.length
+    ? `${S.bands.length} size band${S.bands.length>1?"s":""} selected &middot; <b>${fmt(sumBands())}</b> conversations`
+    : "Select one or more size bands.";
+  $("#go1").disabled = !(S.bands.length || S.inds.length);
+}
+function sumBands(){
+  const m=P.markets[S.market];
+  return S.bands.reduce((a,b)=>a+m.bands[b].n,0);
+}
+addEventListener("DOMContentLoaded",()=>{ try{ fromMap(); }catch(e){ console.error(e); } });
+document.querySelectorAll("[data-mk]").forEach(b=>b.onclick=()=>{
+  S.market=b.dataset.mk; S.bands=[]; S.inds=[]; S.comps=[];
+  document.querySelectorAll("[data-mk]").forEach(x=>x.classList.toggle("sel",x===b));
+  $("#unitHint").innerHTML="by "+P.markets[S.market].unit+" &middot; pick as many as you like";
+  paintBands(); paintInds(); paintComps();
+  ["#gBand","#gInd","#gComp","#gRole"].forEach(s=>$(s).style.display="block");
+  step1State();
+});
+document.querySelectorAll("[data-role]").forEach(b=>b.onclick=()=>{
+  S.role=b.dataset.role;
+  document.querySelectorAll("[data-role]").forEach(x=>x.classList.toggle("sel",x===b));
+});
+$("#bAll").onclick=()=>{S.bands=Object.keys(P.markets[S.market].bands);paintBands();step1State();};
+$("#bNone").onclick=()=>{S.bands=[];paintBands();step1State();};
+$("#iNone").onclick=()=>{S.inds=[];paintInds();step1State();};
+
+$("#go1").onclick=()=>{
+  const r=resolve(), c=S.comps[0];
+  $("#s2lede").innerHTML = `We have <b>${fmt(r.n)}</b> qualified conversations matching
+    ${esc(r.label)}. Ask in your own words, or start with one of these.`;
+  $("#ask2").placeholder = c ? `e.g. how many buyers are leaving ${c}?`
+                             : "e.g. how many of the smallest buyers have no software at all?";
+  // competitor-led questions first, because they are the ones the user just told us they care about
+  const cards = S.comps.map(v=>
+    `<button class="sg" data-q="today" data-e="${esc(v)}"><small>Your competitor</small>
+      How many of these buyers are on ${esc(v)} today?</button>`);
+  Object.entries(P.questions).forEach(([k,q])=>
+    cards.push(`<button class="sg" data-q="${k}"><small>${q.kicker}</small>${q.q}</button>`));
+  $("#sgList").innerHTML = cards.join("");
+  document.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
+    S.entity=b.dataset.e||null; S.typed=null; S.conf="high"; render(b.dataset.q);
+  });
+  show(2);
+};
+$("#back1").onclick=()=>show(1);
+
+/* ---------------- resolution ---------------- */
+// Sums counts across every selected slice. Each conversation belongs to exactly one
+// band and one industry, so summing is valid and never double counts.
+function resolve(){
+  const m=P.markets[S.market]||{bands:{},inds:{}};
+  const useInd = S.inds.length>0;
+  const src = useInd ? m.inds : m.bands;
+  const picked = useInd ? S.inds : (S.bands.length?S.bands:Object.keys(m.bands));
+  let n=0; const acc={};
+  picked.forEach(k=>{
+    const d=src[k]; if(!d) return; n+=d.n;
+    ["today","why","feat"].forEach(q=>{
+      acc[q]=acc[q]||{};
+      d[q].forEach(r=>acc[q][r.l]=(acc[q][r.l]||0)+r.c);
+    });
+  });
+  const mk = {};
+  ["today","why","feat"].forEach(q=>{
+    mk[q]=Object.entries(acc[q]||{}).map(([l,c])=>({l,c,p:n?100*c/n:0}))
+            .filter(r=>r.c>0).sort((a,b)=>b.c-a.c);
+  });
+  const parts=[];
+  parts.push(P.markets[S.market]?P.markets[S.market].label:"");
+  if(useInd) parts.push(S.inds.length>3?`${S.inds.length} industries`:S.inds.join(", "));
+  if(!useInd && S.bands.length && S.bands.length<Object.keys(m.bands).length)
+    parts.push(S.bands.length>3?`${S.bands.length} size bands`:S.bands.join(", "));
+  return {n, rows:mk, useInd, label:parts.filter(Boolean).join(", ")};
+}
+
+/* ---------------- free text ---------------- */
+/* Intent classification.
+   The hard case is that "leaving" appears in both "WHAT are they leaving" (an incumbent
+   question) and "WHY are they leaving" (a reason question). Keyword presence alone cannot
+   separate them, so we decide on what the question ASKS FOR - a thing, a reason, or a
+   capability - and let an explicit "why" always win. Whatever we decide is shown to the
+   user and is one click to override, because this will still be wrong sometimes. */
+function parse(t){
+  const low=" "+t.toLowerCase().replace(/[^a-z0-9$'. ]/g," ").replace(/\s+/g," ")+" ";
+  let entity=null, best=0;
+  for(const [k,v] of Object.entries(P.aliases)){
+    if(low.includes(" "+k+" ") && k.length>best){ entity=v; best=k.length; }
+  }
+  let ind=null;
+  const m=P.markets[S.market];
+  if(m) for(const name of Object.keys(m.inds)){
+    const first=name.toLowerCase().split(/[ \-]/)[0];
+    if(first.length>3 && low.includes(first)){ ind=name; break; }
+  }
+  const THING=/\b(system|systems|tool|tools|software|platform|platforms|vendor|vendors|product|products|solution|solutions|app|apps|stack|incumbent|incumbents|provider|providers|competitor|competitors)\b/;
+  const CAPAB=/\b(feature|features|capab|functionality|requirement|requirements|need|needs|want|wants|asking for|looking for|must have|wish list)\b/;
+  const HAVING=/\b(use|uses|using|used|run|runs|running|today|current|currently|leaving|leave|leaves|switching|switch|migrat|replac|moving off|coming from|away from|have|has|on)\b/;
+  const REASON=/\b(reason|reasons|because|trigger|triggers|motivat|pain|pains|struggl|frustrat|problem|problems|complain|dissatisf|unhappy|shopping|churn)\b/;
+
+  let q, conf="high";
+  if(/\bwhy\b/.test(low) || /\breason/.test(low) || /\bdriv(e|es|ing)\b/.test(low)) q="why";
+  // words that can only be asking about a grievance, even next to a product noun
+  else if(/(frustrat|pain point|pain|struggl|complain|dissatisf|unhappy|annoy|dislike|gripe)/.test(low)) q="why";
+  else if(THING.test(low) && HAVING.test(low)) q="today";
+  else if(CAPAB.test(low)) q="feat";
+  else if(REASON.test(low)) q="why";
+  else if(HAVING.test(low) || THING.test(low)) q="today";
+  else { q="today"; conf="low"; }
+  return {entity, ind, q, conf};
+}
+// An empty box means "run the question you just showed me in the placeholder".
+function submit(v, boxSel){
+  v=(v||"").trim();
+  if(!v && boxSel){ const el=$(boxSel); if(el) v=(el.placeholder||"").replace(/^e\.g\.\s*/i,"").trim(); }
+  if(!v) return;
+  const p=parse(v);
+  if(p.ind && !S.inds.includes(p.ind)){ S.inds=[p.ind]; paintInds && paintInds(); }
+  S.entity=p.entity; S.typed=v; S.conf=p.conf; render(p.q);
+  ["#ask2","#ask3"].forEach(s=>{ const el=$(s); if(el) el.value=""; });
+}
+$("#go2").onclick=()=>submit($("#ask2").value,"#ask2");
+$("#ask2").addEventListener("keydown",e=>{if(e.key==="Enter")submit(e.target.value,"#ask2");});
+$("#back2").onclick=()=>{ S.editing=null; show(2); };
+// the follow-up input is rebuilt with every answer, so it is bound after each render
+function bindFollowInput(){
+  const go=$("#go3"), inp=$("#ask3");
+  if(!go||!inp) return;
+  go.onclick=()=>submit(inp.value,"#ask3");
+  inp.onkeydown=e=>{ if(e.key==="Enter") submit(e.target.value,"#ask3"); };
+}
+
+/* ---- arriving from a map -------------------------------------------------
+   A map dot links here with #market=...&band=...&q=...&entity=...
+   Land straight on that answer instead of making the user rebuild the segment. */
+function fromMap(){
+  const h=decodeURIComponent(location.hash.replace(/^#/,""));
+  if(!h) return false;
+  const q={}; h.split("&").forEach(kv=>{const i=kv.indexOf("="); if(i>0) q[kv.slice(0,i)]=kv.slice(i+1);});
+  if(!q.market || !P.markets[q.market]) return false;
+  S.market=q.market;
+  S.bands = (q.band && P.markets[q.market].bands[q.band]) ? [q.band] : Object.keys(P.markets[q.market].bands);
+  S.inds=[]; S.entity=q.entity||null; S.typed=null; S.conf="high"; S.fromMap=true;
+  try{ paintBands(); paintInds(); paintComps(); }catch(e){}
+  render(["today","why","feat"].includes(q.q)?q.q:"today");
+  return true;
+}
+
+/* ------- inline segment editor: change anything without leaving the answer ------- */
+function chipLabel(kind){
+  const m=P.markets[S.market];
+  if(kind==="market") return S.market;
+  if(kind==="ind") return S.inds.length
+    ? (S.inds.length>2 ? S.inds.length+" industries" : S.inds.join(", "))
+    : "All industries";
+  if(kind==="band"){
+    if(S.inds.length) return "Any size";
+    const total=Object.keys(m.bands).length;
+    if(!S.bands.length || S.bands.length===total) return "All sizes";
+    return S.bands.length>2 ? S.bands.length+" size bands" : S.bands.join(", ");
+  }
+  return P.roles[S.role].name;
+}
+function paintCtx(){
+  const kinds=["market","band","ind","role"];
+  $("#ctxBar").innerHTML = kinds.map(k=>
+    `<button class="chip ed${S.editing===k?" open":""}" data-edit="${k}">${esc(chipLabel(k))}<span class="cv">&#9662;</span></button>`
+  ).join("") + (S.entity
+    ? `<span class="chip q">${esc(S.entity)}<button class="cx" data-clearent="1" title="Clear">&times;</button></span>` : "");
+  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{
+    S.editing = S.editing===b.dataset.edit ? null : b.dataset.edit;
+    paintCtx(); paintEditor();
+  });
+  const ce=$("[data-clearent]"); if(ce) ce.onclick=()=>{ S.entity=null; S.typed=null; render(S.q); };
+}
+function paintEditor(){
+  const box=$("#editor");
+  if(!S.editing){ box.innerHTML=""; return; }
+  const m=P.markets[S.market];
+  let head="", body="";
+  if(S.editing==="market"){
+    head="Market";
+    body=`<div class="cards">`+Object.entries(P.markets).map(([k,mm])=>
+      `<button class="card${k===S.market?" sel":""}" data-emk="${k}"><div class="ct">${k}</div>
+       <div class="cs">${mm.blurb}</div></button>`).join("")+`</div>`;
+  } else if(S.editing==="band"){
+    head="Buyer size &middot; by "+m.unit;
+    body=`<div class="pills">`+Object.entries(m.bands).map(([b,d])=>
+      `<button class="pill${(!S.inds.length&&S.bands.includes(b))?" sel":""}" data-eband="${esc(b)}">${b}<span class="np">${fmt(d.n)}</span></button>`).join("")
+      +`</div><div class="tools"><button data-eba="all">Select all</button><button data-eba="none">Clear</button></div>`
+      +(S.inds.length?`<div class="edna">An industry filter is active, so size is not applied.
+         Clearing the industry filter re-enables it.</div>`:"");
+  } else if(S.editing==="ind"){
+    head="Buyer industry &middot; optional";
+    body=`<div class="pills">`+Object.entries(m.inds).map(([b,d])=>
+      `<button class="pill${S.inds.includes(b)?" sel":""}" data-eind="${esc(b)}">${b}<span class="np">${fmt(d.n)}</span></button>`).join("")
+      +`</div><div class="tools"><button data-eia="none">Clear industries</button></div>`;
+  } else {
+    head="Your role &middot; changes the recommendation, not the data";
+    body=`<div class="pills">`+Object.entries(P.roles).map(([k,rr])=>
+      `<button class="pill${k===S.role?" sel":""}" data-erole="${k}">${rr.name}</button>`).join("")+`</div>`;
+  }
+  box.innerHTML=`<div class="edbox"><div class="edh">${head}
+    <button class="edx" data-edclose="1">Done</button></div>${body}</div>`;
+
+  const live=()=>render(S.q);   // re-renders the answer in place, panel stays open
+  document.querySelectorAll("[data-emk]").forEach(b=>b.onclick=()=>{
+    if(b.dataset.emk===S.market) return;
+    S.market=b.dataset.emk; S.bands=[]; S.inds=[]; S.entity=null; live();
+  });
+  document.querySelectorAll("[data-eband]").forEach(b=>b.onclick=()=>{
+    const v=b.dataset.eband; S.inds=[];
+    S.bands.includes(v) ? S.bands.splice(S.bands.indexOf(v),1) : S.bands.push(v);
+    live();
+  });
+  document.querySelectorAll("[data-eind]").forEach(b=>b.onclick=()=>{
+    const v=b.dataset.eind;
+    S.inds.includes(v) ? S.inds.splice(S.inds.indexOf(v),1) : S.inds.push(v);
+    live();
+  });
+  document.querySelectorAll("[data-erole]").forEach(b=>b.onclick=()=>{ S.role=b.dataset.erole; live(); });
+  document.querySelectorAll("[data-eba]").forEach(b=>b.onclick=()=>{
+    S.inds=[]; S.bands = b.dataset.eba==="all" ? Object.keys(m.bands) : []; live();
+  });
+  document.querySelectorAll("[data-eia]").forEach(b=>b.onclick=()=>{ S.inds=[]; live(); });
+  const cl=$("[data-edclose]"); if(cl) cl.onclick=()=>{ S.editing=null; paintCtx(); paintEditor(); };
+}
+
+/* ---------------- answer ---------------- */
+function render(qid){
+  S.q=qid;
+  const r=resolve(), rows=r.rows[qid], n=r.n;
+  const role=P.roles[S.role];
+  if(!rows||!rows.length){
+    paintCtx(); paintEditor();
+    $("#ans").innerHTML=`<div class="warn"><b>Nothing selected.</b> Pick at least one size band
+      or industry above.</div>`;
+    show(3, !!S.editing); return; }
+
+  // which row is the subject of the answer?
+  let subj=rows[0], missed=null;
+  if(S.entity){
+    const hit=rows.find(x=>x.l===S.entity);
+    if(hit) subj=hit; else missed=S.entity;
+  }
+  const rank=rows.indexOf(subj)+1;
+  const max=rows[0].p;
+  const green=/^(No software|Paper or no)/.test(subj.l);
+  const key = qid==="today" ? (green?"today_green":"today_vendor") : qid;
+  const vars={top:subj.l, tp:Math.round(subj.p), tc:fmt(subj.c), n:fmt(n)};
+
+  paintCtx(); paintEditor();
+
+  // abstention notice — say what we could not do, never silently substitute
+  let warn="";
+  if(missed) warn+=`<div class="warn"><b>We do not track ${esc(missed)} in this market.</b>
+    It was not named often enough in advisor notes to clear the ${P.floor}-conversation floor,
+    so there is no defensible number to show you. Everything below answers the same question
+    for the vendors we can count.</div>`;
+  if(r.useInd) warn+=`<div class="warn"><b>Size filter not applied.</b> Industry slices are not yet
+    crossed with buyer size, so this covers all sizes in ${esc(S.inds.length>2?S.inds.length+" industries":S.inds.join(", "))}.
+    Crossing both dimensions puts most cells under the ${P.floor}-conversation floor.</div>`;
+
+  // Four adjacent stats, every one of them a live pivot to a different answer.
+  const tiles=[];
+  ["today","why","feat"].filter(k=>k!==qid).forEach(k=>{
+    const t=r.rows[k][0];
+    tiles.push(`<button class="tile" data-goto="${k}"><div class="tk">${P.questions[k].kicker}</div>
+      <div class="tn">${fmt(t.c)}</div><div class="tv">${esc(t.l)}</div></button>`);
+  });
+  // competitor the user named, else the greenfield share, else the runner-up
+  const comp = S.comps.find(c=>c!==subj.l && r.rows.today.some(x=>x.l===c));
+  if(comp){
+    const t=r.rows.today.find(x=>x.l===comp);
+    tiles.push(`<button class="tile" data-pivot="today" data-ent="${esc(comp)}">
+      <div class="tk">Your competitor</div><div class="tn">${fmt(t.c)}</div>
+      <div class="tv">on ${esc(comp)} today</div></button>`);
+  } else {
+    const g=r.rows.today.find(x=>/^(No software|Paper or no)/.test(x.l));
+    if(g && g.l!==subj.l) tiles.push(`<button class="tile" data-pivot="today" data-ent="${esc(g.l)}">
+      <div class="tk">No software yet</div><div class="tn">${fmt(g.c)}</div>
+      <div class="tv">had nothing in place</div></button>`);
+  }
+  // one runner-up only. Padding to four was filling the page with rows that
+  // said nothing - Stanzie and Ike both called the page overloaded.
+  if(tiles.length<4 && rows[1]){
+    const ru = rows.find(x=>x!==subj) || rows[1];
+    tiles.push(`<button class="tile" data-pivot="${qid}" data-ent="${esc(ru.l)}">
+      <div class="tk">Next in this view</div><div class="tn">${fmt(ru.c)}</div>
+      <div class="tv">${esc(ru.l)}</div></button>`);
+  }
+
+  // follow ups
+  const fu=[];
+  if(qid!=="why") fu.push([`why`,null,`Why ${S.entity?esc(S.entity)+" users are":"they are"} shopping for something new`]);
+  if(qid!=="feat") fu.push([`feat`,null,`What capabilities this segment is asking for`]);
+  if(qid!=="today") fu.push([`today`,null,`What they are running today`]);
+  if(qid==="today" && !green && rows[1]) fu.push([`today`,rows[1].l,`How ${esc(rows[1].l)} compares`]);
+  if(qid==="today" && green) fu.push([`today`,rows[1]?rows[1].l:null,`The largest named vendor in this segment`]);
+
+  $("#ans").innerHTML = `
+    <p class="eyebrow">${P.questions[qid].kicker}</p>
+    <h1 style="font-size:26px;margin-bottom:${S.typed?"16px":"24px"}">${S.typed?esc(S.typed):P.questions[qid].q}</h1>
+    ${S.fromMap?'<div class="frommap">Opened from a Compass map.</div>':""}
+    ${interp(qid)}
+    ${warn}
+    <div class="answer-primary">
+    ${qid==="today"?knowLead(qid, subj, n, green):""}
+    <div class="stat">
+      ${qid==="why"||qid==="feat"?`<div class="big">${Math.round(subj.p)}%<i>of buyers</i></div>
+      <div class="say">${sentence(qid, subj, green)}</div>
+      <div class="basis"><b>${fmt(subj.c)}</b> buyers in the <b>${fmt(n)}</b> conversations in this
+        segment <span class="rank">${rank>1?`#${rank} of ${rows.length}`:`most common of ${rows.length}`}</span></div>`:`<div class="big">${fmt(subj.c)}<i>${subj.c===1?"buyer":"buyers"}</i></div>
+      <div class="say">${sentence(qid, subj, green)}</div>
+      <div class="basis"><b>${Math.round(subj.p)}%</b> of the <b>${fmt(n)}</b> conversations in this
+        segment <span class="rank">${rank>1?`#${rank} of ${rows.length}`:`most common of ${rows.length}`}</span></div>`}
+    </div>
+    ${qid==="today"?trendBlock(subj.l)
+       :`<div class="trend nodata">Trend over time is not available on this question yet.
+          Only the incumbent question has history loaded. Reasons and requirements over time
+          are the next data pull.</div>`}
+    </div>
+    <div class="answer-evidence">
+    <p class="sect" style="margin-top:30px">What we actually heard</p>
+    <p class="subsect">Every number on this page is built from conversations like this one.
+      A real advisor note, taken on the call, with the buyer anonymised.</p>
+    <div class="quote" id="qbox"></div>
+    </div>
+    <div class="answer-action">
+    <p class="sect">What this means for ${esc(role.short)}</p>
+    <div class="fia">
+      <div class="fh">Recommendation</div>
+      <div class="fr"><div class="fk">Fact</div><div class="fv">${fmt(subj.c)} of the ${fmt(n)}
+        buyers in this segment ${sentence(qid,subj,green,true)}, or ${Math.round(subj.p)}%.</div></div>
+      <div class="fr"><div class="fk">Impact</div><div class="fv">${fill(P.impact[key],vars)}</div></div>
+      <div class="fr act"><div class="fk">Act</div><div class="fv">${fill(P.act[S.role+"|"+key]||"",vars)}</div></div>
+    </div>
+    </div>
+    <div class="answer-explore">
+    <p class="sect">Full ranking &middot; ${fmt(n)} conversations</p>
+    ${rows.slice(0,6).map(x=>`<div class="row${x===subj?" hi":""}" data-pick="${esc(x.l)}">
+      <div class="rt"><b>${esc(x.l)}</b><span class="v">${fmt(x.c)}<em>${Math.round(x.p)}%</em></span></div>
+      <div class="trk"><i style="width:${Math.max(2,Math.round(100*x.p/max))}%"></i></div></div>`).join("")}
+    <p class="hint">Click any row to make it the subject of the answer.</p>
+    <p class="sect" style="margin-top:36px">Related in this segment</p>
+    <div class="tiles">${tiles.join("")}</div>
+    <div class="follow"><p class="sect">Keep going</p><div class="fchips">
+      ${fu.slice(0,3).map(([q,e,t])=>`<button class="fchip" data-fq="${q}" data-fe="${e?esc(e):""}">${t}</button>`).join("")}
+    </div>
+      <div class="orask"><div class="lbl">Or ask your own</div>
+        <div class="ask"><input id="ask3" placeholder="Ask a follow-up..." autocomplete="off">
+        <button id="go3">&rarr;</button></div></div>
+    </div>
+    <p class="sect" style="margin-top:36px">See it in context</p>
+    <a class="tomap" href="G2 Compass - the four maps.html" target="_blank">
+      Open the ${esc(S.market)} maps &rarr;</a>
+    <p class="sect" style="margin-top:34px">Take this further</p>
+    <div class="outbox">
+      <div class="olbl">What are you using this for?</div>
+      <div class="ask"><input id="intent" autocomplete="off"
+        placeholder="e.g. a PowerPoint on why buyers should move off ADP and to us">
+        <button id="intentGo">&rarr;</button></div>
+      <div class="achips" id="achips"></div>
+      <div class="obuild"><span id="aWhat"></span></div>
+      <div class="obtns" id="obtns"></div>
+      <pre id="outPre" class="opre"></pre>
+    </div>
+    <div class="foot"><b>How this is sourced.</b> Counted, not estimated, across ${fmt(n)} qualified
+      buyer-advisor conversations in G2 Digital Markets' corpus, filtered to ${esc(r.label)},
+      ${P.corpus.window}. Corpus holds ${fmt(P.corpus.total)} qualified conversations back to
+      ${P.corpus.first}.<br>Slices under ${P.floor} conversations are suppressed rather than shown.
+      No individual buyer is ever identified. Themes and vendor names are matched against advisor
+      note text, so every count is a reliable floor rather than a census.<br>
+      <b>One assumption to know about.</b> A buyer running something today who is talking to one of
+      our advisors is usually shopping to replace it, but not always - some are adding a second
+      system, and some are checking the market and will stay put. Read these as buyers in play,
+      not confirmed switchers.</div>`;
+
+  const wb=$("[data-why]");
+  if(wb) wb.onclick=()=>whyPanel(wb.dataset.why);
+  document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{
+    S.entity=b.dataset.pick; S.typed=null; render(qid);
+  });
+  document.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>{
+    S.entity=null; S.typed=null; render(b.dataset.goto);
+  });
+  document.querySelectorAll("[data-pivot]").forEach(b=>b.onclick=()=>{
+    S.entity=b.dataset.ent||null; S.typed=null; render(b.dataset.pivot);
+  });
+  document.querySelectorAll("[data-fq]").forEach(b=>b.onclick=()=>{
+    S.entity=b.dataset.fe||null; S.typed=null; render(b.dataset.fq);
+  });
+  // re-read the SAME typed question a different way; keep it on screen
+  document.querySelectorAll("[data-reread]").forEach(b=>b.onclick=()=>{
+    S.conf="high"; render(b.dataset.reread);
+  });
+  S.qi=0; S.qsubj=subj.l; paintQuote(qid);
+  bindOutput(qid, subj, rows, n, r);
+  bindFollowInput();
+  show(3, !!S.editing);
+}
+
+/* ---- trend over time -------------------------------------------------
+   Eight rolling 12-month windows a quarter apart. Rolling, not raw quarters:
+   a raw quarter in a small band is a dozen conversations and tells you nothing.
+   Only available on the incumbent question, and only when a single size band
+   is selected - summing bands across windows would mix different denominators. */
+/* ---- "Here is what we know" -----------------------------------------
+   Stanzie's framing. Lead with a narrative a human would say out loud, not a
+   bare metric. States the leaving assumption instead of burying it: someone on
+   a system today who is talking to us is PROBABLY leaving, not definitely. */
+function knowLead(qid, subj, n, green){
+  const c=fmt(subj.c), N=fmt(n), who=esc(subj.l);
+  if(qid==="today"){
+    let dir="";
+    const t=trendFor(subj.l);
+    if(t && !t.blocked && t.pts && t.pts.length>1){
+      const d=t.pts[t.pts.length-1]-t.pts[0];
+      dir = Math.abs(d)<1
+        ? ` That has held steady since ${t.ends[0]}.`
+        : ` That has come up ${d>0?"more":"less"} often over time, not less${d>0?"":""} - since ${t.ends[0]} it has gone ${d>0?"up":"down"}.`;
+      if(d<-1) dir=` That has come up less often over time - since ${t.ends[0]} it has fallen.`;
+      if(d>1)  dir=` That has come up more often over time - since ${t.ends[0]} it has risen.`;
+    }
+    if(green) return `<p class="know"><b>Here is what we know.</b> We spoke to <b>${N}</b> buyers in
+      this segment. <b>${c}</b> of them had no software in place at all when they called us.${dir}</p>`;
+    return `<p class="know"><b>Here is what we know.</b> We spoke to <b>${N}</b> buyers in this
+      segment. <b>${c}</b> of them were running ${who} at the time, and they called us because they
+      were shopping for something else - so most, though not all, are on their way out.${dir}</p>`;
+  }
+  if(qid==="why") return `<p class="know"><b>Here is what we know.</b> Of the <b>${N}</b> buyers we
+    spoke to in this segment, <b>${c}</b> told an advisor this was why they were looking.</p>`;
+  return `<p class="know"><b>Here is what we know.</b> Of the <b>${N}</b> buyers we spoke to in this
+    segment, <b>${c}</b> asked for this by name.</p>`;
+}
+function trendFor(label){
+  const m=P.markets[S.market];
+  if(!m||!m.trend||!m.trendKeys) return null;
+  if(S.inds.length) return {blocked:"industry"};        // no trend on industry cuts yet
+  const bands=(S.bands.length?S.bands:Object.keys(m.bands)).filter(b=>m.trend[b]);
+  if(!bands.length) return null;
+  const i=m.trendKeys.indexOf(label); if(i<0) return null;
+  // sum counts and denominators across the selected bands, window by window.
+  // Same arithmetic the live answer already does, just repeated per window.
+  const W=P.trendEnds.length, n=Array(W).fill(0), c=Array(W).fill(0);
+  bands.forEach(b=>{ const t=m.trend[b];
+    for(let w=0;w<W;w++){ n[w]+=t.n[w]; c[w]+=t.c[w][i]; } });
+  return {pts:n.map((v,w)=>100*c[w]/v), n, ends:P.trendEnds,
+          scope: bands.length===1 ? bands[0]
+               : bands.length===Object.keys(m.trend).length ? "all size bands"
+               : bands.length+" size bands"};
+}
+function sparkline(pts,w,h){
+  const min=Math.min(...pts), max=Math.max(...pts), span=(max-min)||1;
+  const x=i=>i*(w/(pts.length-1));
+  const y=v=>h-4-((v-min)/span)*(h-8);
+  const d=pts.map((v,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area=`${d} L${w},${h} L0,${h} Z`;
+  const rising=pts[pts.length-1]>=pts[0];
+  const col=rising?"#0f8a5f":"#FF492C";
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true">
+    <path d="${area}" fill="${col}" opacity=".08"/>
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(pts.length-1)}" cy="${y(pts[pts.length-1])}" r="3.5" fill="${col}"/></svg>`;
+}
+function trendBlock(label){
+  const t=trendFor(label);
+  if(t&&t.blocked) return `<div class="trend nodata">Trend over time is not available on
+    industry cuts yet. Clear the industry filter to see how this changed.</div>`;
+  if(!t) return "";
+  const W=t.pts.length, now=t.pts[W-1], first=t.pts[0], yearAgo=t.pts[W-5];
+  // Headline the change the sparkline actually draws. Reporting year-on-year next to a
+  // two-year line was saying "flat" over a chart that visibly falls.
+  const dFull=now-first, dYear=now-yearAgo;
+  const dir=Math.abs(dFull)<1?"flat":(dFull>0?"up":"down");
+  const word=dir==="flat"?"Flat":(dFull>0?"Up":"Down");
+  const yr=Math.abs(dYear)<1?"steady over the last year"
+        :`${dYear>0?"up":"down"} ${Math.abs(dYear).toFixed(1)} in the last year`;
+  return `<button class="trend" data-why="${esc(label)}">
+    ${sparkline(t.pts,170,52)}
+    <div class="tinfo">
+      <div class="tdelta ${dir}">${dir==="flat"
+          ? `About the same share as in ${t.ends[0]}`
+          : `${dFull>0?"More":"Fewer"} buyers are on ${esc(label)} now than in ${t.ends[0]}`}</div>
+      <div class="tsub">${first.toFixed(0)}% then, ${now.toFixed(0)}% now${dir==="flat"?"":`, a ${Math.abs(dFull).toFixed(1)} point ${dFull>0?"rise":"fall"}`}. ${yr[0].toUpperCase()+yr.slice(1)}.
+        Eight rolling 12-month windows, ${esc(t.scope)}.</div>
+    </div>
+    <span class="tgo">Why?</span></button>
+  <div class="whybox" id="whybox"></div>`;
+}
+// Clicking the trend asks the obvious next question. Be careful what we claim:
+// the corpus shows what moved alongside it, not a proven cause.
+function whyPanel(label){
+  const box=$("#whybox"); if(!box) return;
+  if(box.dataset.open===label){ box.innerHTML=""; box.dataset.open=""; return; }
+  const m=P.markets[S.market], t=trendFor(label);
+  if(!t||t.blocked) return;
+  const bands=(S.bands.length?S.bands:Object.keys(m.bands)).filter(b=>m.trend[b]);
+  const W=P.trendEnds.length, last=W-1;
+  const N=Array(W).fill(0); bands.forEach(b=>{for(let w=0;w<W;w++)N[w]+=m.trend[b].n[w];});
+  const co=m.trendKeys.map((l,i)=>{
+    let a=0,z=0; bands.forEach(b=>{a+=m.trend[b].c[0][i]; z+=m.trend[b].c[last][i];});
+    return {l, d:100*z/N[last]-100*a/N[0], now:100*z/N[last], c:z};
+  }).filter(r=>r.l!==label && r.c>=15 && Math.abs(r.d)>=1)
+    .sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,3);
+  const vol=((N[last]-N[0])/N[0])*100;
+  const r=resolve();
+  box.dataset.open=label;
+  box.innerHTML=`<div class="whyinner">
+    <p class="sect" style="margin:0 0 14px">What moved alongside ${esc(label)}</p>
+    ${co.map(x=>`<div class="corow"><span class="cod ${x.d>0?"up":"down"}">${x.d>0?"+":""}${x.d.toFixed(1)}</span>
+      <span class="col">${esc(x.l)}</span><span class="con">now ${x.now.toFixed(0)}%</span></div>`).join("")}
+    <div class="corow"><span class="cod ${vol>0?"up":"down"}">${vol>0?"+":""}${vol.toFixed(0)}%</span>
+      <span class="col">Total conversations in this segment</span>
+      <span class="con">${N[0].toLocaleString()} to ${N[last].toLocaleString()}</span></div>
+    <div class="cocaveat"><b>What this is.</b> Movements measured over the same eight windows.
+      Compass shows what changed together, not what caused it. Reasons-over-time is the next
+      data pull, and it is what would turn this into a real explanation.</div>
+  </div>`;
+}
+function moversBlock(){
+  const m=P.markets[S.market];
+  if(!m||!m.trend||!m.trendKeys||S.inds.length) return "";
+  const bands=(S.bands.length?S.bands:Object.keys(m.bands)).filter(b=>m.trend[b]);
+  if(!bands.length) return "";
+  const W=P.trendEnds.length, last=W-1, ya=W-5;
+  const N=Array(W).fill(0); bands.forEach(b=>{for(let w=0;w<W;w++)N[w]+=m.trend[b].n[w];});
+  const rows=m.trendKeys.map((l,i)=>{
+    let a=0,b2=0; bands.forEach(b=>{a+=m.trend[b].c[ya][i]; b2+=m.trend[b].c[last][i];});
+    return {l, d:100*b2/N[last]-100*a/N[ya], now:100*b2/N[last], c:b2};
+  }).filter(r=>r.c>=15 && Math.abs(r.d)>=1);
+  rows.sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+  if(!rows.length) return "";
+  return `<p class="sect" style="margin-top:34px">What moved in the last year</p>
+    <div class="movers">${rows.slice(0,4).map(r=>
+      `<button class="mv" data-pick="${esc(r.l)}">
+        <span class="mvd ${r.d>0?"up":"down"}">${r.d>0?"+":""}${r.d.toFixed(1)}</span>
+        <span><span class="mvl">${esc(r.l)}</span>
+        <span class="mvn">now ${r.now.toFixed(0)}%, ${r.c.toLocaleString()} conversations</span></span>
+      </button>`).join("")}</div>`;
+}
+
+/* Advisor verbatims, cycled. Five real notes per market per question type. */
+// Order the verbatims so the ones that mention the current subject come first.
+// A quote about ADP under an ADP headline is the whole point of showing it.
+function relevantQuotes(qid, label){
+  const all=(P.quotes[S.market]||{})[qid]||[];
+  if(!label) return all.map(t=>({t,hit:false}));
+  const green=/^(No software|Paper or no)/.test(label);
+  const needle=green ? /(no system|no software|no formal|not have a formal|nothing in place|nothing really|no platform|pen and paper|still on paper|do not have|don't have|spreadsheet|excel)/i
+                     : (()=>{
+                         const first=label.split(/[ /(]/)[0];
+                         const terms=label.split(/\s+/).filter(w=>!/^(a|an|the|or|and|of|for|to|in|with|on|system)$/i.test(w));
+                         if(first.length<=2){
+                           const safe=terms.map(w=>String(w).replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/(ing|ed|e)$/i,""));
+                           return new RegExp("\\b(?:"+safe.join("|")+ ")","i");
+                         }
+                         const safe=first.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+                         return new RegExp("\\b"+safe+"\\b","i");
+                       })();
+  const hit=[], rest=[];
+  all.forEach(t=>(needle.test(t)?hit:rest).push(t));
+  return hit.length ? hit.map(t=>({t,hit:true})) : [];
+}
+function paintQuote(qid){
+  const box=$("#qbox"); if(!box) return;
+  const list=relevantQuotes(qid, S.qsubj);
+  if(!list.length){ box.innerHTML='<div class="qt">No direct advisor note matched this subject in the current sample.</div>'; return; }
+  const i=((S.qi||0)%list.length+list.length)%list.length;
+  const cite = list[i].hit && S.qsubj
+    ? `Advisor note mentioning ${esc(S.qsubj)}. Anonymised.`
+    : `Advisor note, ${esc(S.market)} buyer, last 12 months. Anonymised.`;
+  box.innerHTML=`<div class="qt">${esc(list[i].t)}</div>
+    <div class="qf"><cite>${cite}</cite>
+      <span class="qnav"><button data-q="-1" title="Previous">&#8249;</button>
+        <span class="qn">${i+1} / ${list.length}</span>
+        <button data-q="1" title="Next">&#8250;</button></span></div>`;
+  box.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
+    S.qi=(S.qi||0)+Number(b.dataset.q); paintQuote(qid);
+  });
+}
+
+/* ---- deliverables -------------------------------------------------------
+   The intent picks an ARTIFACT, not a file format. "Battlecards for SDRs"
+   produces a battlecard, not a markdown dump with a different first line.
+   Format (.md / .csv / clipboard) is only how it leaves the building.       */
+const ARTIFACTS={
+  battlecard:{name:"Competitor battlecard", hint:"who they run, why they leave, and the questions to ask"},
+  messaging: {name:"Messaging brief",       hint:"table stakes, differentiators, and the buyer's own language"},
+  adcopy:    {name:"Ad angles",             hint:"headline angles ranked by how many buyers raised them"},
+  discovery: {name:"Discovery script",      hint:"opening and qualifying questions built from real triggers"},
+  roadmap:   {name:"Demand brief",          hint:"capability demand against what incumbents deliver"},
+  exec:      {name:"Executive summary",     hint:"three facts, the whitespace, and one recommendation"},
+};
+// What file do they want? Asking for a PowerPoint should produce a PowerPoint.
+const FORMATS={
+  pptx:{name:"PowerPoint", ext:"pptx"},
+  md:  {name:"Markdown",   ext:"md"},
+  csv: {name:"Spreadsheet",ext:"csv"},
+};
+function pickFormat(text){
+  const t=(text||"").toLowerCase();
+  if(/power ?point|\bppt\b|pptx|slide|deck|presentation/.test(t)) return "pptx";
+  if(/spreadsheet|excel|\bcsv\b|\bsheet\b/.test(t)) return "csv";
+  return "md";
+}
+function pickArtifact(text){
+  const t=(text||"").toLowerCase();
+  // naming a real vendor is the strongest signal that they want a battlecard.
+  // "excel", "paper", "nothing" are in the alias map but are not competitors.
+  const NOTVENDOR=/^(excel|spreadsheet|spreadsheets|paper|nothing)$/;
+  for(const k of Object.keys(P.aliases))
+    if(k.length>3 && !NOTVENDOR.test(k) && t.includes(k)) return "battlecard";
+  if(/battlecard|battle card|compet|versus|\bvs\b|displac|conquest|move off|switch (from|off)|win against|take share|steal/.test(t)) return "battlecard";
+  if(/\bad\b|\bads\b|ppc|paid|campaign|headline|creative|google|linkedin|search copy/.test(t)) return "adcopy";
+  if(/discovery|call script|talk track|cold call|sdr script|prospecting/.test(t)) return "discovery";
+  if(/messag|positioning|homepage|website|launch|narrative|value prop/.test(t)) return "messaging";
+  if(/roadmap|product|feature|prioriti|backlog|build/.test(t)) return "roadmap";
+  if(/exec|board|qbr|leadership|summary|one-?pager|briefing/.test(t)) return "exec";
+  return S.role==="sales"?"discovery":S.role==="paid"?"adcopy":S.role==="product"?"roadmap":
+         S.role==="exec"?"exec":"messaging";
+}
+// turn a real switching trigger into a question a rep can actually ask
+function discoveryQ(label){
+  const l=label.toLowerCase();
+  if(/manual/.test(l))            return "How much of your week goes to doing this by hand right now?";
+  if(/cost|renewal|price/.test(l))return "When does your current contract renew, and what happened to the price last time?";
+  if(/consolidat|fragment|integrated/.test(l)) return "How many separate systems are involved today, and where does the handoff break down?";
+  if(/support/.test(l))           return "When something goes wrong with your current system, what actually happens?";
+  if(/growth|headcount/.test(l))  return "Where do you expect to be on headcount twelve months from now?";
+  if(/clunky|outdated|hard-to-use/.test(l)) return "Who on your team avoids the current system, and what do they do instead?";
+  if(/complian|tax/.test(l))      return "Which jurisdictions are you operating in, and what worries you most about that?";
+  if(/estimat|bidding/.test(l))   return "Walk me through how you put your last bid together.";
+  if(/job cost|margin/.test(l))   return "At what point in a job do you know whether it is making money?";
+  if(/new practice|opening/.test(l)) return "When do you plan to see your first patient, and what has to be live by then?";
+  if(/billing|claims/.test(l))    return "What is your denial rate today, and who chases the rebills?";
+  if(/documentation|speed/.test(l)) return "How much charting are your providers still doing after hours?";
+  if(/paper/.test(l))             return "What is still living on paper today?";
+  return `You mentioned ${label.toLowerCase()} - what does that look like day to day?`;
+}
+/* One content model, two renderers. The PowerPoint and the markdown must never
+   drift apart again - previously the pptx ignored the artifact type entirely. */
+function buildSections(kind, qid, subj, rows, n, r){
+  const q=k=>r.rows[k]||[], pc=x=>Math.round(x.p);
+  const named=q("today").filter(x=>!/^(No software|Paper or no|Spreadsheets)/.test(x.l));
+  const green=q("today").find(x=>/^(No software|Paper or no)/.test(x.l));
+  // every competitor named in the intent box, then the chip, then the picker
+  const itxt=(($("#intent")&&$("#intent").value)||"").toLowerCase();
+  let targets=[];
+  if(itxt) q("today").forEach(x=>{
+    const k=x.l.split(/[ /(]/)[0].toLowerCase();
+    // word boundary, not substring: "ADP" is three letters and must still match
+    const re=new RegExp("\\b"+k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
+    if(k.length>=3 && re.test(itxt) && !/^(no|paper|spreadsheet)/.test(k)) targets.push(x.l);
+  });
+  if(!targets.length) targets=[S.entity||S.comps[0]||(named[0]&&named[0].l)].filter(Boolean);
+  const trows=targets.map(t=>q("today").find(x=>x.l===t)).filter(Boolean);
+  const target=targets[0];
+  const trow=trows[0];
+  const quotes=k=>((P.quotes[S.market]||{})[k]||[]);
+  const stat=x=>({l:x.l, v:pc(x)+"%", c:x.c.toLocaleString()});
+  const basis=`${n.toLocaleString()} buyer conversations, ${P.corpus.window}`;
+  const source=`Source: G2 Digital Markets buyer conversation corpus. ${n.toLocaleString()} qualified `+
+    `conversations matching ${r.label}, ${P.corpus.window}. Counts, not estimates. Minimum `+
+    `${P.floor} conversations per slice. No individual buyer is identified.`;
+  const O={subtitle:r.label, basis, source, sections:[]};
+  const add=(h,type,items,note)=>{ if(items&&items.length) O.sections.push({h,type,items,note}); };
+
+  if(kind==="battlecard" && trow){
+    O.title="Battlecard: "+trows.map(x=>x.l).join(" and ");
+    add("How often you will meet them","stats", trows.map(stat),
+      trows.length>1
+        ? `Combined, they are the incumbent for ${trows.reduce((a,x)=>a+x.c,0).toLocaleString()} of ${n.toLocaleString()} buyers.`
+        : `Ranks #${q("today").indexOf(trow)+1} of ${q("today").length} incumbents in this segment.`);
+    if(green) add("The bigger opponent","bullets",
+      [`${pc(green)}% of this segment has no software at all. That is ${green.c.toLocaleString()} buyers who are not comparing you to anyone.`]);
+    add("Why buyers in this segment leave","stats", q("why").slice(0,5).map(stat));
+    add("Discovery questions","numbered", q("why").slice(0,4).map(x=>discoveryQ(x.l)));
+    add("What they will ask you to prove","stats", q("feat").slice(0,5).map(stat));
+    add("In their words","quotes", quotes("why").slice(0,3));
+  }
+  else if(kind==="messaging"){
+    O.title="Messaging brief";
+    add("Where these buyers are starting from","stats", q("today").slice(0,5).map(stat),
+      green?`${pc(green)}% have no software in place. Your message competes with doing nothing.`:null);
+    add("What actually moves them","stats", q("why").slice(0,4).map(stat));
+    add("Table stakes, then differentiators","bullets",[
+      q("feat")[0]?`Table stakes: ${q("feat")[0].l} at ${pc(q("feat")[0])}%. Prove it and move on.`:null,
+      ...q("feat").slice(1,4).map(x=>`Differentiate here: ${x.l} at ${pc(x)}%`)
+    ].filter(Boolean));
+    add("Their language, not yours","quotes", quotes("why").slice(0,3));
+  }
+  else if(kind==="adcopy"){
+    O.title="Ad angles";
+    add("Headline angles, ranked by how many buyers raised the problem","stats", q("why").slice(0,5).map(stat));
+    add("Proof points for the landing page","stats", q("feat").slice(0,4).map(stat));
+    add("Targeting note","bullets",[
+      green?`${pc(green)}% run no software today. Problem keywords will beat competitor terms here.`:null,
+      named[0]?`Largest named incumbent is ${named[0].l} at ${pc(named[0])}%, the realistic conquest target.`:null
+    ].filter(Boolean));
+    add("Phrases lifted from real conversations","quotes", quotes("why").slice(0,3));
+  }
+  else if(kind==="discovery"){
+    O.title="Discovery script";
+    if(q("why")[0]) add("Open with the most common trigger","quotes",[discoveryQ(q("why")[0].l)],
+      `${pc(q("why")[0])}% of this segment raised ${q("why")[0].l.toLowerCase()} unprompted.`);
+    add("Then qualify","numbered", q("why").slice(1,4).map(x=>`${discoveryQ(x.l)}  (${pc(x)}%)`));
+    add("Incumbent probes","bullets", q("today").slice(0,3).map(x=>
+      /^(No software|Paper or no)/.test(x.l)
+        ? `No system (${pc(x)}%): "What breaks today because nothing is tracking this?"`
+        : `${x.l} (${pc(x)}%): "What made you start looking beyond ${x.l}?"`));
+    add("Requirements they will raise","stats", q("feat").slice(0,5).map(stat));
+    add("Real quotes for context","quotes", quotes("today").slice(0,3));
+  }
+  else if(kind==="roadmap"){
+    O.title="Demand brief";
+    add("Requested capabilities, ranked","stats", q("feat").map(stat));
+    add("What they are migrating from","stats", q("today").slice(0,5).map(stat));
+    add("Read","bullets",[
+      q("feat")[0]?`${q("feat")[0].l} at ${pc(q("feat")[0])}% is entry price, not advantage.`:null,
+      q("feat")[1]?`Contested ground starts at ${q("feat")[1].l} (${pc(q("feat")[1])}%).`:null,
+      green?`${pc(green)}% arrive with no system, so import and time-to-first-value are competitive features.`:null
+    ].filter(Boolean));
+    add("Verbatim requirements","quotes", quotes("feat").slice(0,3));
+  }
+  else {
+    O.title=`${S.market} snapshot`;
+    add("Three things to know","bullets",[
+      q("today")[0]?`${pc(q("today")[0])}% are on ${q("today")[0].l} today.`:null,
+      q("why")[0]?`${pc(q("why")[0])}% are shopping because of ${q("why")[0].l.toLowerCase()}.`:null,
+      q("feat")[0]?`${pc(q("feat")[0])}% ask for ${q("feat")[0].l.toLowerCase()}.`:null
+    ].filter(Boolean));
+    add("Where the whitespace is","bullets",[
+      green?`${pc(green)}% of this segment runs no software at all. That is the largest single block, and it is not a competitor.`:null,
+      named[0]?`The largest named incumbent, ${named[0].l}, holds only ${pc(named[0])}%. This is a fragmented segment.`:null
+    ].filter(Boolean));
+    add("In their words","quotes", quotes("why").slice(0,3));
+  }
+  // every artifact closes with the role-specific recommendation
+  const gr=/^(No software|Paper or no)/.test(subj.l);
+  const key=qid==="today"?(gr?"today_green":"today_vendor"):qid;
+  const vars={top:subj.l,tp:Math.round(subj.p),tc:subj.c.toLocaleString(),n:n.toLocaleString()};
+  O.impact=fill(P.impact[key],vars);
+  O.act=fill(P.act[S.role+"|"+key]||"",vars);
+  return O;
+}
+function sectionsToMarkdown(O){
+  const L=[`# ${O.title}`,"",`**Segment:** ${O.subtitle}  `,`**Basis:** ${O.basis}`,""];
+  O.sections.forEach(s=>{
+    L.push(`## ${s.h}`,"");
+    if(s.note) L.push(`_${s.note}_`,"");
+    if(s.type==="stats") s.items.forEach(i=>L.push(`- **${i.l}** - ${i.v} (${i.c} conversations)`));
+    else if(s.type==="numbered") s.items.forEach((i,k)=>L.push(`${k+1}. ${i}`));
+    else if(s.type==="quotes") s.items.forEach(i=>L.push(`> ${i}`,""));
+    else s.items.forEach(i=>L.push(`- ${i}`));
+    L.push("");
+  });
+  L.push(`## Recommendation for ${P.roles[S.role].name}`,"",`- **Impact:** ${O.impact}`,
+         `- **Act:** ${O.act}`,"","---","",O.source);
+  return L.join("\n");
+}
+function buildArtifact(kind, qid, subj, rows, n, r){
+  return sectionsToMarkdown(buildSections(kind,qid,subj,rows,n,r));
+}
+/* ---- PowerPoint, built here, no library and no network -------------------
+   A .pptx is a zip of XML. We write the zip with STORE (no compression) so
+   there is no dependency to load and nothing to fail during a live demo.     */
+const CRC=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;
+  for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}
+  return b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=t[(c^b[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;};})();
+function zip(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  const u16=n=>[n&255,(n>>8)&255], u32=n=>[n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255];
+  for(const f of files){
+    const name=enc.encode(f.name), data=enc.encode(f.data), crc=CRC(data);
+    const lh=[...u32(0x04034b50),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0)];
+    parts.push(new Uint8Array(lh), name, data);
+    central.push([...u32(0x02014b50),...u16(20),...u16(20),...u16(0),...u16(0),...u16(0),...u16(0),
+      ...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),
+      ...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off)]);
+    central[central.length-1].nameBytes=name;
+    off += lh.length+name.length+data.length;
+  }
+  const cd=[]; let cdLen=0;
+  for(const c of central){ cd.push(new Uint8Array(c), c.nameBytes); cdLen+=c.length+c.nameBytes.length; }
+  const eocd=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),
+    ...u16(files.length),...u16(files.length),...u32(cdLen),...u32(off),...u16(0)]);
+  const all=[...parts,...cd,eocd];
+  let total=0; all.forEach(a=>total+=a.length);
+  const out=new Uint8Array(total); let p=0;
+  all.forEach(a=>{out.set(a,p);p+=a.length;});
+  return new Blob([out],{type:"application/vnd.openxmlformats-officedocument.presentationml.presentation"});
+}
+const X=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const EMU=i=>Math.round(i*914400);
+function sp(id,x,y,w,h,paras){
+  return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="t${id}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+  <p:spPr><a:xfrm><a:off x="${EMU(x)}" y="${EMU(y)}"/><a:ext cx="${EMU(w)}" cy="${EMU(h)}"/></a:xfrm>
+  <a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr>
+  <p:txBody><a:bodyPr wrap="square" lIns="0" tIns="0" rIns="0" bIns="0"><a:spAutoFit/></a:bodyPr><a:lstStyle/>
+  ${paras}</p:txBody></p:sp>`;
+}
+function para(txt,{sz=18,b=false,color="111111",spc=0,align="l"}={}){
+  return `<a:p><a:pPr algn="${align}"/><a:r><a:rPr lang="en-US" sz="${Math.round(sz*100)}" b="${b?1:0}" dirty="0"${spc?` spc="${spc}"`:""}>
+  <a:solidFill><a:srgbClr val="${color}"/></a:solidFill><a:latin typeface="Figtree"/></a:rPr>
+  <a:t>${X(txt)}</a:t></a:r></a:p>`;
+}
+function rectSp(id,x,y,w,h,color){
+  return `<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="r${id}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+  <p:spPr><a:xfrm><a:off x="${EMU(x)}" y="${EMU(y)}"/><a:ext cx="${EMU(w)}" cy="${EMU(h)}"/></a:xfrm>
+  <a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${color}"/></a:solidFill>
+  <a:ln><a:noFill/></a:ln></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/></p:txBody></p:sp>`;
+}
+function slideXml(shapes,bg){
+  // an explicit rectangle, not just p:bg - some viewers ignore p:bg and render
+  // white-on-white or re-theme the text colour
+  if(bg) shapes = rectSp(999,0,0,13.334,7.5,bg) + shapes;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:cSld>${bg?`<p:bg><p:bgPr><a:solidFill><a:srgbClr val="${bg}"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>`:""}
+<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
+${shapes}</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`;
+}
+function pptxBlob(slides){
+  const n=slides.length;
+  const files=[
+   {name:"[Content_Types].xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
+<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
+<Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
+${slides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join("")}
+</Types>`},
+   {name:"_rels/.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/></Relationships>`},
+   {name:"ppt/presentation.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>
+<p:sldIdLst>${slides.map((_,i)=>`<p:sldId id="${256+i}" r:id="rId${i+2}"/>`).join("")}</p:sldIdLst>
+<p:sldSz cx="12192000" cy="6858000"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>`},
+   {name:"ppt/_rels/presentation.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
+${slides.map((_,i)=>`<Relationship Id="rId${i+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join("")}
+<Relationship Id="rId${n+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/></Relationships>`},
+   {name:"ppt/slideMasters/slideMaster1.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+<p:grpSpPr/></p:spTree></p:cSld>
+<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>
+<p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst></p:sldMaster>`},
+   {name:"ppt/slideMasters/_rels/slideMaster1.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/></Relationships>`},
+   {name:"ppt/slideLayouts/slideLayout1.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank" preserve="1">
+<p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+<p:grpSpPr/></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`},
+   {name:"ppt/slideLayouts/_rels/slideLayout1.xml.rels",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`},
+   {name:"ppt/theme/theme1.xml",data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="G2">
+<a:themeElements><a:clrScheme name="G2"><a:dk1><a:srgbClr val="111111"/></a:dk1><a:lt1><a:srgbClr val="FFFFFF"/></a:lt1>
+<a:dk2><a:srgbClr val="062846"/></a:dk2><a:lt2><a:srgbClr val="F2F2F2"/></a:lt2>
+<a:accent1><a:srgbClr val="FF492C"/></a:accent1><a:accent2><a:srgbClr val="5746B2"/></a:accent2>
+<a:accent3><a:srgbClr val="FFC800"/></a:accent3><a:accent4><a:srgbClr val="27D3BC"/></a:accent4>
+<a:accent5><a:srgbClr val="288DFF"/></a:accent5><a:accent6><a:srgbClr val="062846"/></a:accent6>
+<a:hlink><a:srgbClr val="FF492C"/></a:hlink><a:folHlink><a:srgbClr val="5746B2"/></a:folHlink></a:clrScheme>
+<a:fontScheme name="G2"><a:majorFont><a:latin typeface="Figtree"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont>
+<a:minorFont><a:latin typeface="Figtree"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>
+<a:fmtScheme name="G2"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
+<a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst>
+<a:lnStyleLst><a:ln><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst>
+<a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst>
+<a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme>
+</a:themeElements></a:theme>`},
+  ];
+  slides.forEach((s,i)=>{
+    files.push({name:`ppt/slides/slide${i+1}.xml`, data:slideXml(s.shapes, s.bg)});
+    files.push({name:`ppt/slides/_rels/slide${i+1}.xml.rels`, data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>`});
+  });
+  return zip(files);
+}
+function makePptx(kind, qid, subj, rows, n, r, name){
+  const NAVY="062846", RO="FF492C", GREY="555555", LIGHT="F2F2F2", ALT="EAEBEA", W="FFFFFF";
+  const O=buildSections(kind,qid,subj,rows,n,r);
+  const slides=[];
+
+  // title
+  slides.push({bg:NAVY, shapes:
+    sp(2,.7,2.0,11,.4, para(ARTIFACTS[kind].name.toUpperCase(),{sz:12,b:true,color:W,spc:200}))+
+    sp(3,.7,2.5,11.5,1.2, para(O.title,{sz:40,b:true,color:W}))+
+    sp(4,.7,3.9,11.5,.5,  para(O.subtitle,{sz:16,color:"C9D2DA"}))+
+    sp(5,.7,6.3,11.5,.4,  para(O.basis,{sz:12,color:"9FB3C4"}))});
+
+  // one slide per section
+  O.sections.forEach(sec=>{
+    let id=2, y=1.30;
+    let sh=sp(id++,.7,.55,11.9,.4, para(sec.h.toUpperCase(),{sz:11,b:true,color:RO,spc:200}));
+    if(sec.note){ sh+=sp(id++,.7,1.02,11.9,.4, para(sec.note,{sz:14,color:GREY})); y=1.62; }
+    if(sec.type==="stats"){
+      sec.items.slice(0,7).forEach((it,i)=>{
+        sh+=rectSp(id++,.7,y,11.9,.54, i%2?ALT:LIGHT);
+        sh+=sp(id++,.9,y+.15,7.6,.32, para(it.l,{sz:15}));
+        sh+=sp(id++,8.6,y+.13,1.6,.32, para(it.v,{sz:16,b:true,color:NAVY,align:"r"}));
+        sh+=sp(id++,10.4,y+.16,2.0,.32, para(it.c,{sz:13,color:GREY,align:"r"}));
+        y+=.60;
+      });
+    } else if(sec.type==="quotes"){
+      sec.items.slice(0,3).forEach(t=>{
+        sh+=rectSp(id++,.7,y,.05,1.05,RO);
+        sh+=sp(id++,.98,y,11.4,1.05, para(t,{sz:15,color:"333333"}));
+        y+=1.30;
+      });
+    } else {
+      sec.items.slice(0,6).forEach((t,i)=>{
+        if(sec.type==="numbered") sh+=sp(id++,.7,y,.6,.4, para(String(i+1)+".",{sz:17,b:true,color:RO}));
+        else sh+=rectSp(id++,.72,y+.12,.14,.14,RO);
+        sh+=sp(id++,sec.type==="numbered"?1.25:1.1, y, 11.2, .8, para(t,{sz:17}));
+        y+=.78;
+      });
+    }
+    slides.push({shapes:sh});
+  });
+
+  // recommendation
+  slides.push({shapes:
+    sp(2,.7,.55,11.9,.4, para("RECOMMENDATION FOR "+P.roles[S.role].name.toUpperCase(),
+      {sz:11,b:true,color:RO,spc:200}))+
+    sp(3,.7,1.15,11.9,1.4, para(O.impact,{sz:18}))+
+    rectSp(4,.7,2.85,11.9,.04,RO)+
+    sp(5,.7,3.15,11.9,2.0, para(O.act,{sz:22,b:true,color:NAVY}))+
+    sp(6,.7,6.15,11.9,.7, para(O.source,{sz:10,color:GREY}))});
+
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(pptxBlob(slides)); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  return Promise.resolve(true);
+}
+
+function bindOutput(qid, subj, rows, n, r){
+  const intent=$("#intent"), chips=$("#achips"), what=$("#aWhat"), pre=$("#outPre"), btns=$("#obtns");
+  const cur=()=>S.artifact||pickArtifact(intent?intent.value:"");
+  const fmt=()=>S.fmt||pickFormat(intent?intent.value:"");
+  const text=()=>buildArtifact(cur(),qid,subj,rows,n,r);
+  const csv=()=>["answer,share_pct,conversations,total_conversations,segment"]
+    .concat(rows.map(x=>`"${x.l}",${Math.round(x.p)},${x.c},${n},"${r.label}"`)).join("\n");
+  const slug=()=>(ARTIFACTS[cur()].name+"-"+S.market).toLowerCase().replace(/[^a-z0-9]+/g,"-");
+  const dl=(t,name,type)=>{ const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([t],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href); };
+
+  const paint=()=>{
+    const k=cur(), f=fmt();
+    if(chips) chips.innerHTML=Object.entries(ARTIFACTS).map(([id,a])=>
+      `<button class="achip${id===k?" on":""}" data-art="${id}">${a.name}</button>`).join("");
+    if(what) what.innerHTML=`Will produce a <b>${ARTIFACTS[k].name.toLowerCase()}</b> as
+      <b>${FORMATS[f].name}</b>. ${ARTIFACTS[k].hint}.`;
+    if(btns) btns.innerHTML=
+      `<button id="outMain" class="oprim">Download ${FORMATS[f].name} (.${FORMATS[f].ext})</button>`+
+      `<button id="outCopy">Copy text to clipboard</button>`+
+      `<button id="outPeek" class="olink">Preview</button>`;
+    if(pre && pre.style.display==="block") pre.textContent=text();
+    if(chips) chips.querySelectorAll("[data-art]").forEach(b=>b.onclick=()=>{
+      S.artifact=b.dataset.art; paint();
+    });
+    const main=$("#outMain"), cp=$("#outCopy"), pk=$("#outPeek");
+    if(main) main.onclick=async()=>{
+      const f2=fmt();
+      if(f2==="csv") return dl(csv(), slug()+"-data.csv","text/csv");
+      if(f2==="md")  return dl(text(), slug()+".md","text/markdown");
+      main.textContent="Building PowerPoint...";
+      try{ await makePptx(cur(),qid,subj,rows,n,r, slug()+".pptx"); }
+      catch(err){ console.error(err); main.textContent="PowerPoint failed - downloading .md";
+        setTimeout(paint,2400); return dl(text(), slug()+".md","text/markdown"); }
+      paint();
+    };
+    if(cp) cp.onclick=()=>{
+      const t=text();
+      if(pre){ pre.style.display="block"; pre.textContent=t; }
+      navigator.clipboard && navigator.clipboard.writeText(t).catch(()=>{});
+      cp.textContent="Copied - this is what you got"; setTimeout(paint,2000);
+    };
+    if(pk) pk.onclick=()=>{ if(!pre) return;
+      const open=pre.style.display==="block";
+      pre.style.display=open?"none":"block";
+      if(!open) pre.textContent=text();
+      pk.textContent=open?"Preview":"Hide preview"; };
+  };
+  paint();
+  const reread=()=>{ S.artifact=null; S.fmt=null; paint(); };
+  if(intent){ intent.oninput=reread;
+    intent.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); runIntent(); } }; }
+  const ig=$("#intentGo");
+  const runIntent=()=>{
+    if(intent && !intent.value.trim())
+      intent.value=(intent.placeholder||"").replace(/^e\.g\.\s*/i,"").trim();
+    reread(); if(pre){ pre.style.display="block"; pre.textContent=text(); }
+  };
+  if(ig) ig.onclick=runIntent;
+}
+
+/* Show the reading we chose, and make every other reading one click away.
+   The classifier will misread questions; the recovery is what matters. */
+const READAS={today:"what they are using today", why:"why they are shopping",
+              feat:"what they are asking for"};
+function interp(qid){
+  if(!S.typed) return "";
+  const alts=Object.keys(READAS).filter(k=>k!==qid);
+  const unsure = S.conf==="low";
+  return `<div class="interp${unsure?" unsure":""}">
+    <span class="ik">${unsure?"Not sure, so I read this as":"Read as"}</span>
+    <b>${READAS[qid]}</b>
+    <span class="isep">&middot;</span>
+    <span class="ik">did you mean</span>
+    ${alts.map(k=>`<button class="ialt" data-reread="${k}">${READAS[k]}?</button>`).join("")}
+  </div>`;
+}
+function sentence(qid, subj, green, plain){
+  const b = plain ? (s=>s) : (s=>`<b>${s}</b>`);
+  if(qid==="today") return green
+    ? `have ${b("no software in place")} today`
+    : `are on ${b(esc(subj.l))} today`;
+  if(qid==="why") return `are shopping because of ${b(lc(esc(subj.l)))}`;
+  return `are asking for ${b(lc(esc(subj.l)))}`;
+}
+function lc(s){ return /^[A-Z][a-z]/.test(s) && !/[A-Z]/.test(s.slice(1)) ? s[0].toLowerCase()+s.slice(1) : s; }
+window.show = show;
+</script>
+</body></html>
